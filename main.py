@@ -49,7 +49,7 @@ class TaskInputFrame(customtkinter.CTkFrame):
         return ("NOTHING_CHOSEN", "")
 
 
-class CheckboxFrame(customtkinter.CTkFrame):
+class TaskListFrame(customtkinter.CTkFrame):
     def __init__(self, master, title, values, height, width):
         super().__init__(master, height=height, width=width)
         self.grid_columnconfigure(0, weight=1)
@@ -62,30 +62,46 @@ class CheckboxFrame(customtkinter.CTkFrame):
         self.title = customtkinter.CTkLabel(
             self, text=self.title, fg_color="gray30", corner_radius=6
         )
-        self.title.grid(
-            row=0, column=0, padx=10, pady=(10, 0), sticky="ew", columnspan=2
-        )
+        self.title.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="ew")
 
-        for i, value in enumerate(self.values):
-            checkbox = customtkinter.CTkCheckBox(self, text=value)
-            checkbox.grid(row=i + 1, column=0, padx=10, pady=(10, 0), sticky="w")
-            self.row_count += 1
-        print(checkbox)
+        # for i, value in enumerate(self.values):
+        #     checkbox = customtkinter.CTkCheckBox(self, text=value)
+        #     checkbox.grid(row=i + 1, column=0, padx=10, pady=(10, 0), sticky="w")
+        #     self.row_count += 1
+        # print(checkbox)
 
     def add_new_task_to_frame(self, task):
-        print(self.row_count, task)
-        checkbox = customtkinter.CTkCheckBox(self, text=task)
-        checkbox.grid(row=self.row_count, column=0, padx=10, pady=(10, 0), sticky="w")
-        checkbox_del_button = customtkinter.CTkButton(
-            self, text="X", command=self.master.del_task, width=28
-        )
-        checkbox_del_button.grid(
-            row=self.row_count, column=1, padx=10, pady=(10, 0), sticky="e"
-        )
+        # print(self.row_count, task)
+        # checkbox = customtkinter.CTkCheckBox(self, text=task)
+        # checkbox.grid(row=self.row_count, column=0, padx=10, pady=(10, 0), sticky="w")
+        # checkbox_del_button = customtkinter.CTkButton(
+        #     self, text="X", command=self.master.del_task, width=28
+        # )
+        # checkbox_del_button.grid(
+        #     row=self.row_count, column=1, padx=10, pady=(10, 0), sticky="e"
+        # )
+        new_task = TaskFrame(self, task)
+        new_task.grid(row=self.row_count, column=0, padx=10, pady=(10, 0), sticky="ew")
         self.row_count += 1
 
     def del_task_from_frame(self, task):
         pass
+
+
+class TaskFrame(customtkinter.CTkFrame):
+    def __init__(self, master, task):
+        super().__init__(master)
+        self.grid_columnconfigure(0, weight=1)
+
+        self.checkbox = customtkinter.CTkCheckBox(self, text=task)
+        self.checkbox.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        self.checkbox_del_button = customtkinter.CTkButton(
+            self, text="X", command=self.del_task, width=28
+        )
+        self.checkbox_del_button.grid(row=0, column=1, padx=10, pady=10, sticky="e")
+
+    def del_task(self):
+        self.destroy()
 
 
 class App(customtkinter.CTk):
@@ -94,14 +110,14 @@ class App(customtkinter.CTk):
 
         # Main window properties and layout settings
         self.title("Memoboard")
-        self.geometry("720x530")
+        self.geometry("720x540")
         self.grid_columnconfigure((0, 1), weight=1)
         self.grid_rowconfigure(0, weight=1)
         self.f_width = self.winfo_width() / 2
         self.f_height = self.winfo_height() / 2
 
         # individual frames with checkboxes for daily and optional tasks
-        self.checkbox_frame1 = CheckboxFrame(
+        self.checkbox_frame1 = TaskListFrame(
             self,
             "Daily",
             values=["Task 1", "Task 2", "Task 3"],
@@ -110,7 +126,7 @@ class App(customtkinter.CTk):
         )
         self.checkbox_frame1.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="nsew")
         self.checkbox_frame1.grid_propagate(False)
-        self.checkbox_frame2 = CheckboxFrame(
+        self.checkbox_frame2 = TaskListFrame(
             self,
             "Optional",
             values=["Optional task 1", "Optional task 2", "Optional task 3"],
@@ -148,8 +164,8 @@ class App(customtkinter.CTk):
                 print("ADDED TO OPTIONAL:")
                 self.checkbox_frame2.add_new_task_to_frame(task)
 
-    def del_task(self):
-        pass
+    # def del_task(self):
+    #     pass
 
 
 app = App()
