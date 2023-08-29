@@ -1,2 +1,2 @@
-# Whiteboard
- A whiteboard for the desktop
+# Memoboard
+ A memoboard for the desktop
