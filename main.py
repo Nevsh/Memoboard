@@ -1,10 +1,45 @@
 import customtkinter
 import tkinter
 
-customtkinter.set_appearance_mode("Dark")
-customtkinter.set_default_color_theme("green")
+customtkinter.set_appearance_mode("dark")
+customtkinter.set_default_color_theme("blue")
 
 
+# class NavbarFrame creates a frame that functions as a navbar
+class NavbarFrame(customtkinter.CTkFrame):
+    def __init__(self, master):
+        super().__init__(master, fg_color=("gray80", "gray40"), corner_radius=0)
+
+        self.karma_counter = 0
+        self.karma_counter_label = customtkinter.CTkLabel(
+            self, text=f"Karma: {self.karma_counter}"
+        )
+        self.karma_counter_label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+
+        self.mode_switch_var = customtkinter.StringVar(value="off")
+        self.mode_switch = customtkinter.CTkSwitch(
+            self,
+            text="Light Mode",
+            command=self.change_mode,
+            variable=self.mode_switch_var,
+            onvalue="on",
+            offvalue="off",
+        )
+        self.mode_switch.grid(row=0, column=2, padx=(0, 10), pady=10, sticky="e")
+        self.grid_columnconfigure((0, 1, 2), weight=1)
+
+    def change_mode(self):
+        if self.mode_switch_var.get() == "off":
+            customtkinter.set_appearance_mode("dark")
+        else:
+            customtkinter.set_appearance_mode("light")
+
+    def update_karma(self, karma):
+        self.karma_counter = karma
+        self.karma_counter_label.configure(text=f"Karma: {self.karma_counter}")
+
+
+# class TaskInputFrame creates a frame for adding a new task
 class TaskInputFrame(customtkinter.CTkFrame):
     def __init__(self, master):
         super().__init__(master)
@@ -49,51 +84,47 @@ class TaskInputFrame(customtkinter.CTkFrame):
         return ("NOTHING_CHOSEN", "")
 
 
+# class TaskListFrame creates a frame in which newly created TaskFrame objects will be stored
 class TaskListFrame(customtkinter.CTkFrame):
-    def __init__(self, master, title, values, height, width):
+    def __init__(self, master, title, height, width):
         super().__init__(master, height=height, width=width)
         self.grid_columnconfigure(0, weight=1)
-        self.values = values
         self.title = title
         self.master = master
         self.checkboxes = []
         self.row_count = 1
+        self.task_list_frame_karma = 0
 
         self.title = customtkinter.CTkLabel(
-            self, text=self.title, fg_color="gray30", corner_radius=6
+            self, text=self.title, fg_color=("gray70", "gray30"), corner_radius=6
         )
         self.title.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="ew")
 
-        # for i, value in enumerate(self.values):
-        #     checkbox = customtkinter.CTkCheckBox(self, text=value)
-        #     checkbox.grid(row=i + 1, column=0, padx=10, pady=(10, 0), sticky="w")
-        #     self.row_count += 1
-        # print(checkbox)
-
     def add_new_task_to_frame(self, task):
-        # print(self.row_count, task)
-        # checkbox = customtkinter.CTkCheckBox(self, text=task)
-        # checkbox.grid(row=self.row_count, column=0, padx=10, pady=(10, 0), sticky="w")
-        # checkbox_del_button = customtkinter.CTkButton(
-        #     self, text="X", command=self.master.del_task, width=28
-        # )
-        # checkbox_del_button.grid(
-        #     row=self.row_count, column=1, padx=10, pady=(10, 0), sticky="e"
-        # )
         new_task = TaskFrame(self, task)
         new_task.grid(row=self.row_count, column=0, padx=10, pady=(10, 0), sticky="ew")
         self.row_count += 1
 
-    def del_task_from_frame(self, task):
-        pass
+    def get_task_frame_karma(self):
+        return self.task_list_frame_karma
+
+    def inc_task_list_frame_karma(self, master, karma):
+        self.task_list_frame_karma += karma
+        master.inc_karma(self.task_list_frame_karma)
 
 
+# class TaskFrame creates a frame which contains a task with a checkbox and a delete button
 class TaskFrame(customtkinter.CTkFrame):
     def __init__(self, master, task):
         super().__init__(master)
         self.grid_columnconfigure(0, weight=1)
+        self.master = master
 
-        self.checkbox = customtkinter.CTkCheckBox(self, text=task)
+        self.checkbox = customtkinter.CTkCheckBox(
+            self,
+            text=task,
+            command=self.task_done,
+        )
         self.checkbox.grid(row=0, column=0, padx=10, pady=10, sticky="w")
         self.checkbox_del_button = customtkinter.CTkButton(
             self, text="X", command=self.del_task, width=28
@@ -102,6 +133,9 @@ class TaskFrame(customtkinter.CTkFrame):
 
     def del_task(self):
         self.destroy()
+
+    def task_done(self):
+        self.master.inc_task_list_frame_karma(self.master.master, 500)
 
 
 class App(customtkinter.CTk):
@@ -112,29 +146,30 @@ class App(customtkinter.CTk):
         self.title("Memoboard")
         self.geometry("720x540")
         self.grid_columnconfigure((0, 1), weight=1)
-        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
         self.f_width = self.winfo_width() / 2
         self.f_height = self.winfo_height() / 2
+
+        self.navbar_frame = NavbarFrame(self)
+        self.navbar_frame.grid(row=0, column=0, sticky="ew", columnspan=2)
 
         # individual frames with checkboxes for daily and optional tasks
         self.checkbox_frame1 = TaskListFrame(
             self,
             "Daily",
-            values=["Task 1", "Task 2", "Task 3"],
             width=self.f_width,
             height=self.f_height,
         )
-        self.checkbox_frame1.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="nsew")
+        self.checkbox_frame1.grid(row=1, column=0, padx=10, pady=(10, 0), sticky="nsew")
         self.checkbox_frame1.grid_propagate(False)
         self.checkbox_frame2 = TaskListFrame(
             self,
             "Optional",
-            values=["Optional task 1", "Optional task 2", "Optional task 3"],
             width=self.f_width,
             height=self.f_height,
         )
         self.checkbox_frame2.grid(
-            row=0, column=1, padx=(0, 10), pady=(10, 0), sticky="nsew"
+            row=1, column=1, padx=(0, 10), pady=(10, 0), sticky="nsew"
         )
         self.checkbox_frame2.grid_propagate(False)
 
@@ -144,7 +179,7 @@ class App(customtkinter.CTk):
         # Text field with button to add a new (optional) task
         self.new_task_frame = TaskInputFrame(self)
         self.new_task_frame.grid(
-            row=1, column=0, padx=10, pady=10, sticky="ew", columnspan=2
+            row=2, column=0, padx=10, pady=10, sticky="nsew", columnspan=2
         )
 
     def add_new_task(self):
@@ -164,8 +199,8 @@ class App(customtkinter.CTk):
                 print("ADDED TO OPTIONAL:")
                 self.checkbox_frame2.add_new_task_to_frame(task)
 
-    # def del_task(self):
-    #     pass
+    def inc_karma(self, karma):
+        self.navbar_frame.update_karma(karma)
 
 
 app = App()
