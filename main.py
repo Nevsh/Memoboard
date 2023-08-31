@@ -12,7 +12,9 @@ class NavbarFrame(customtkinter.CTkFrame):
 
         self.karma_counter = 0
         self.karma_counter_label = customtkinter.CTkLabel(
-            self, text=f"Karma: {self.karma_counter}"
+            self,
+            text=f"Karma: {self.karma_counter}",
+            font=master.app_font,
         )
         self.karma_counter_label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
@@ -24,6 +26,7 @@ class NavbarFrame(customtkinter.CTkFrame):
             variable=self.mode_switch_var,
             onvalue="on",
             offvalue="off",
+            font=master.app_font,
         )
         self.mode_switch.grid(row=0, column=2, padx=(0, 10), pady=10, sticky="e")
         self.grid_columnconfigure((0, 1, 2), weight=1)
@@ -45,15 +48,23 @@ class TaskInputFrame(customtkinter.CTkFrame):
         super().__init__(master)
         self.grid_columnconfigure((0, 1), weight=1)
 
-        self.radio_var = tkinter.StringVar(value="")
+        self.radio_var = customtkinter.StringVar(value="")
 
         self.radio1 = customtkinter.CTkRadioButton(
-            self, text="Daily", variable=self.radio_var, value="daily"
+            self,
+            text="Daily",
+            variable=self.radio_var,
+            value="daily",
+            font=master.master.master.app_font,
         )
         self.radio1.grid(row=0, column=0, padx=(10, 5), pady=(10, 0), sticky="w")
 
         self.radio2 = customtkinter.CTkRadioButton(
-            self, text="Optional", variable=self.radio_var, value="optional"
+            self,
+            text="Optional",
+            variable=self.radio_var,
+            value="optional",
+            font=master.master.master.app_font,
         )
         self.radio2.grid(row=0, column=1, padx=0, pady=(10, 0), sticky="w")
 
@@ -65,7 +76,10 @@ class TaskInputFrame(customtkinter.CTkFrame):
         )
 
         self.button = customtkinter.CTkButton(
-            self, text="Add task", command=master.add_new_task
+            self,
+            text="Add task",
+            command=master.master.master.add_new_task,
+            font=master.master.master.app_font,
         )
         self.button.grid(
             row=2, column=0, padx=10, pady=(0, 10), sticky="ew", columnspan=2
@@ -96,9 +110,13 @@ class TaskListFrame(customtkinter.CTkFrame):
         self.task_list_frame_karma = 0
 
         self.title = customtkinter.CTkLabel(
-            self, text=self.title, fg_color=("gray70", "gray30"), corner_radius=6
+            self,
+            text=self.title,
+            fg_color=("gray70", "gray30"),
+            corner_radius=6,
+            font=master.master.master.app_font,
         )
-        self.title.grid(row=0, column=0, padx=10, pady=(10, 0), sticky="ew")
+        self.title.grid(row=0, column=0, padx=0, pady=(0, 0), sticky="ew")
 
     def add_new_task_to_frame(self, task):
         new_task = TaskFrame(self, task)
@@ -110,13 +128,13 @@ class TaskListFrame(customtkinter.CTkFrame):
 
     def inc_task_list_frame_karma(self, master, karma):
         self.task_list_frame_karma += karma
-        master.inc_karma(self.task_list_frame_karma)
+        master.master.master.inc_karma(self.task_list_frame_karma)
 
 
 # class TaskFrame creates a frame which contains a task with a checkbox and a delete button
 class TaskFrame(customtkinter.CTkFrame):
     def __init__(self, master, task):
-        super().__init__(master)
+        super().__init__(master, fg_color=("gray72", "gray25"))
         self.grid_columnconfigure(0, weight=1)
         self.master = master
 
@@ -145,7 +163,10 @@ class App(customtkinter.CTk):
         # Main window properties and layout settings
         self.title("Memoboard")
         self.geometry("720x540")
-        self.grid_columnconfigure((0, 1), weight=1)
+        self.app_font = customtkinter.CTkFont("Century Gothic", 15, "bold")
+
+        # self.grid_columnconfigure((0, 1), weight=1)
+        self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
         self.f_width = self.winfo_width() / 2
         self.f_height = self.winfo_height() / 2
@@ -153,9 +174,24 @@ class App(customtkinter.CTk):
         self.navbar_frame = NavbarFrame(self)
         self.navbar_frame.grid(row=0, column=0, sticky="ew", columnspan=2)
 
+        self.tab_view = customtkinter.CTkTabview(self)
+        self.tab_view.grid(row=1, column=0, padx=10, pady=(0, 10), sticky="nsew")
+        self.tab_view.add("Tasks")
+        self.tab_view.add("Ideas")
+        self.tab_view.tab("Tasks").grid_columnconfigure((0, 1), weight=1)
+        self.tab_view.tab("Tasks").grid_rowconfigure(1, weight=1)
+
+        self.textbox = customtkinter.CTkTextbox(
+            self.tab_view.tab("Ideas"), font=("Century Gothic", 32)
+        )
+        self.textbox.grid(row=0, column=0, sticky="nsew")
+        # self.tab_view.tab("Ideas").grid(row=0, column=0, sticky="nsew")
+        self.tab_view.tab("Ideas").grid_columnconfigure(0, weight=1)
+        self.tab_view.tab("Ideas").grid_rowconfigure(0, weight=1)
+
         # individual frames with checkboxes for daily and optional tasks
         self.checkbox_frame1 = TaskListFrame(
-            self,
+            self.tab_view.tab("Tasks"),
             "Daily",
             width=self.f_width,
             height=self.f_height,
@@ -163,7 +199,7 @@ class App(customtkinter.CTk):
         self.checkbox_frame1.grid(row=1, column=0, padx=10, pady=(10, 0), sticky="nsew")
         self.checkbox_frame1.grid_propagate(False)
         self.checkbox_frame2 = TaskListFrame(
-            self,
+            self.tab_view.tab("Tasks"),
             "Optional",
             width=self.f_width,
             height=self.f_height,
@@ -177,13 +213,13 @@ class App(customtkinter.CTk):
         # self.checkbox_frame2.configure(fg_color="transparent")
 
         # Text field with button to add a new (optional) task
-        self.new_task_frame = TaskInputFrame(self)
+        self.new_task_frame = TaskInputFrame(self.tab_view.tab("Tasks"))
         self.new_task_frame.grid(
             row=2, column=0, padx=10, pady=10, sticky="nsew", columnspan=2
         )
 
     def add_new_task(self):
-        task, type = self.new_task_frame.get_new_task()
+        task, t_type = self.new_task_frame.get_new_task()
         if task == "NOTHING_CHOSEN":
             # Hint to choose an option
             print("Nothing chosen")
@@ -192,7 +228,7 @@ class App(customtkinter.CTk):
             print("No task")
         else:
             print("ADDING")
-            if type == "daily":
+            if t_type == "daily":
                 print("ADDED TO DAILY:")
                 self.checkbox_frame1.add_new_task_to_frame(task)
             else:
