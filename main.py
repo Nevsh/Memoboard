@@ -38,7 +38,7 @@ class NavbarFrame(customtkinter.CTkFrame):
             customtkinter.set_appearance_mode("light")
 
     def update_karma(self, karma):
-        self.karma_counter = karma
+        self.karma_counter += karma
         self.karma_counter_label.configure(text=f"Karma: {self.karma_counter}")
 
 
@@ -69,7 +69,7 @@ class TaskInputFrame(customtkinter.CTkFrame):
         self.radio2.grid(row=0, column=1, padx=0, pady=(10, 0), sticky="w")
 
         self.task_entry = customtkinter.CTkEntry(
-            self, placeholder_text="New (optional) task"
+            self, placeholder_text="New (optional) task", font=("Century Gothic", 13)
         )
         self.task_entry.grid(
             row=1, column=0, padx=10, pady=(10, 10), sticky="ew", columnspan=2
@@ -118,8 +118,8 @@ class TaskListFrame(customtkinter.CTkFrame):
         )
         self.title.grid(row=0, column=0, padx=0, pady=(0, 0), sticky="ew")
 
-    def add_new_task_to_frame(self, task):
-        new_task = TaskFrame(self, task)
+    def add_new_task_to_frame(self, task, t_type):
+        new_task = TaskFrame(self, task, t_type)
         new_task.grid(row=self.row_count, column=0, padx=10, pady=(10, 0), sticky="ew")
         self.row_count += 1
 
@@ -133,19 +133,23 @@ class TaskListFrame(customtkinter.CTkFrame):
 
 # class TaskFrame creates a frame which contains a task with a checkbox and a delete button
 class TaskFrame(customtkinter.CTkFrame):
-    def __init__(self, master, task):
+    def __init__(self, master, task, t_type):
         super().__init__(master, fg_color=("gray72", "gray25"))
         self.grid_columnconfigure(0, weight=1)
         self.master = master
+        self.done = False
+        self.t_type = t_type
 
         self.checkbox = customtkinter.CTkCheckBox(
-            self,
-            text=task,
-            command=self.task_done,
+            self, text=task, command=self.task_done, font=("Century Gothic", 13)
         )
         self.checkbox.grid(row=0, column=0, padx=10, pady=10, sticky="w")
         self.checkbox_del_button = customtkinter.CTkButton(
-            self, text="X", command=self.del_task, width=28
+            self,
+            text="X",
+            command=self.del_task,
+            width=28,
+            font=("Century Gothic", 13, "bold"),
         )
         self.checkbox_del_button.grid(row=0, column=1, padx=10, pady=10, sticky="e")
 
@@ -153,7 +157,18 @@ class TaskFrame(customtkinter.CTkFrame):
         self.destroy()
 
     def task_done(self):
-        self.master.inc_task_list_frame_karma(self.master.master, 500)
+        if self.done is False:
+            if self.t_type == "daily":
+                self.master.master.master.master.inc_karma(500)
+            else:
+                self.master.master.master.master.inc_karma(100)
+            self.done = True
+        elif self.done is True:
+            if self.t_type == "daily":
+                self.master.master.master.master.inc_karma(-500)
+            else:
+                self.master.master.master.master.inc_karma(-100)
+            self.done = False
 
 
 class App(customtkinter.CTk):
@@ -252,10 +267,10 @@ class App(customtkinter.CTk):
             print("ADDING")
             if t_type == "daily":
                 print("ADDED TO DAILY:")
-                self.checkbox_frame1.add_new_task_to_frame(task)
+                self.checkbox_frame1.add_new_task_to_frame(task, t_type)
             else:
                 print("ADDED TO OPTIONAL:")
-                self.checkbox_frame2.add_new_task_to_frame(task)
+                self.checkbox_frame2.add_new_task_to_frame(task, t_type)
 
     def inc_karma(self, karma):
         self.navbar_frame.update_karma(karma)
