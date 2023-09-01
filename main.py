@@ -184,10 +184,32 @@ class App(customtkinter.CTk):
         self.textbox = customtkinter.CTkTextbox(
             self.tab_view.tab("Ideas"), font=("Century Gothic", 32)
         )
-        self.textbox.grid(row=0, column=0, sticky="nsew")
+        self.textbox.grid(row=1, column=0, sticky="nsew", columnspan=2)
+
+        self.clear_button = customtkinter.CTkButton(
+            self.tab_view.tab("Ideas"),
+            command=self.clear_textbox,
+            text="Clear",
+            width=50,
+            font=self.app_font,
+        )
+        self.clear_button.grid(row=0, column=1, sticky="e", pady=(0, 5))
+
+        self.font_size_var = customtkinter.StringVar(value="medium")
+        self.font_size_textbox = customtkinter.CTkOptionMenu(
+            self.tab_view.tab("Ideas"),
+            values=["small", "medium", "large"],
+            variable=self.font_size_var,
+            dynamic_resizing=True,
+            width=100,
+            command=self.set_font_size,
+            font=("Century Gothic", 15),
+        )
+        self.font_size_textbox.grid(row=0, column=0, sticky="w", pady=(0, 5))
+
         # self.tab_view.tab("Ideas").grid(row=0, column=0, sticky="nsew")
         self.tab_view.tab("Ideas").grid_columnconfigure(0, weight=1)
-        self.tab_view.tab("Ideas").grid_rowconfigure(0, weight=1)
+        self.tab_view.tab("Ideas").grid_rowconfigure(1, weight=1)
 
         # individual frames with checkboxes for daily and optional tasks
         self.checkbox_frame1 = TaskListFrame(
@@ -237,6 +259,18 @@ class App(customtkinter.CTk):
 
     def inc_karma(self, karma):
         self.navbar_frame.update_karma(karma)
+
+    def clear_textbox(self):
+        self.clear_button.focus_set()
+        self.textbox.delete(0.0, "end")
+
+    def set_font_size(self, value):
+        if value == "small":
+            self.textbox.configure(font=("Century Gothic", 24))
+        elif value == "medium":
+            self.textbox.configure(font=("Century Gothic", 32))
+        else:
+            self.textbox.configure(font=("Century Gothic", 42))
 
 
 app = App()
