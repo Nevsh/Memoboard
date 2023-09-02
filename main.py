@@ -1,5 +1,7 @@
 import customtkinter
 import tkinter
+import os
+from PIL import Image
 
 customtkinter.set_appearance_mode("dark")
 customtkinter.set_default_color_theme("blue")
@@ -10,26 +12,58 @@ class NavbarFrame(customtkinter.CTkFrame):
     def __init__(self, master):
         super().__init__(master, fg_color=("gray80", "gray40"), corner_radius=0)
 
+        icon_path = os.path.dirname(os.path.realpath(__file__))
+        print(icon_path)
+        self.karma_icon_neutral = customtkinter.CTkImage(
+            Image.open(icon_path + "/Icons/neutral_96.png"), size=(32, 32)
+        )
+        self.karma_icon_bad_1 = customtkinter.CTkImage(
+            Image.open(icon_path + "/Icons/bad_1_96.png"), size=(32, 32)
+        )
+        self.karma_icon_good_1 = customtkinter.CTkImage(
+            Image.open(icon_path + "/Icons/good_1_96.png"), size=(32, 32)
+        )
+        self.karma_icon_good_2 = customtkinter.CTkImage(
+            Image.open(icon_path + "/Icons/good_2_96.png"), size=(32, 32)
+        )
+        self.karma_icon_good_3 = customtkinter.CTkImage(
+            Image.open(icon_path + "/Icons/good_3_96.png"), size=(32, 32)
+        )
         self.karma_counter = 0
         self.karma_counter_label = customtkinter.CTkLabel(
             self,
-            text=f"Karma: {self.karma_counter}",
+            text=f"Karma: {self.karma_counter} | ",
             font=master.app_font,
+            image=self.karma_icon_neutral,
+            compound="right",
         )
-        self.karma_counter_label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        self.karma_counter_label.grid(row=0, column=3, padx=10, pady=10, sticky="e")
+        self.switch_icon_light = customtkinter.CTkImage(
+            Image.open(icon_path + "/Icons/light_96.png"), size=(28, 28)
+        )
 
         self.mode_switch_var = customtkinter.StringVar(value="off")
         self.mode_switch = customtkinter.CTkSwitch(
             self,
-            text="Light Mode",
+            text="",
             command=self.change_mode,
             variable=self.mode_switch_var,
             onvalue="on",
             offvalue="off",
             font=master.app_font,
         )
-        self.mode_switch.grid(row=0, column=2, padx=(0, 10), pady=10, sticky="e")
-        self.grid_columnconfigure((0, 1, 2), weight=1)
+        self.mode_switch.grid(row=0, column=1, padx=5, pady=10, sticky="w")
+        self.switch_label = customtkinter.CTkLabel(
+            self,
+            text="",
+            image=self.switch_icon_light,
+        )
+        self.switch_label.grid(row=0, column=0, padx=(10, 0), pady=10, sticky="w")
+        # self.grid_columnconfigure((0, 1, 2), weight=1)
+        self.grid_columnconfigure((2), weight=1)
+
+        self.save_button = customtkinter.CTkButton(self, text="SAVE", width=60)
+        self.save_button.grid(row=0, column=2, padx=10, pady=10, sticky="e")
 
     def change_mode(self):
         if self.mode_switch_var.get() == "off":
@@ -39,7 +73,17 @@ class NavbarFrame(customtkinter.CTkFrame):
 
     def update_karma(self, karma):
         self.karma_counter += karma
-        self.karma_counter_label.configure(text=f"Karma: {self.karma_counter}")
+        self.karma_counter_label.configure(text=f"Karma: {self.karma_counter} | ")
+        if self.karma_counter in range(1, 501):
+            self.karma_counter_label.configure(image=self.karma_icon_good_1)
+        elif self.karma_counter in range(502, 1001):
+            self.karma_counter_label.configure(image=self.karma_icon_good_2)
+        elif self.karma_counter > 1000:
+            self.karma_counter_label.configure(image=self.karma_icon_good_3)
+        elif self.karma_counter in range(-1, -501):
+            self.karma_counter_label.configure(image=self.karma_icon_bad_1)
+        else:
+            self.karma_counter_label.configure(image=self.karma_icon_neutral)
 
 
 # class TaskInputFrame creates a frame for adding a new task
@@ -108,6 +152,7 @@ class TaskListFrame(customtkinter.CTkFrame):
         self.checkboxes = []
         self.row_count = 1
         self.task_list_frame_karma = 0
+        self.tasks = []
 
         self.title = customtkinter.CTkLabel(
             self,
@@ -121,6 +166,7 @@ class TaskListFrame(customtkinter.CTkFrame):
     def add_new_task_to_frame(self, task, t_type):
         new_task = TaskFrame(self, task, t_type)
         new_task.grid(row=self.row_count, column=0, padx=10, pady=(10, 0), sticky="ew")
+        self.tasks.append(new_task)
         self.row_count += 1
 
     def get_task_frame_karma(self):
