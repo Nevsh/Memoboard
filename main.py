@@ -1,8 +1,11 @@
 import customtkinter
 import tkinter
 import os
+import uuid
+import json
 from PIL import Image
 
+app_path = os.path.dirname(os.path.realpath(__file__))
 customtkinter.set_appearance_mode("dark")
 customtkinter.set_default_color_theme("blue")
 
@@ -10,36 +13,35 @@ customtkinter.set_default_color_theme("blue")
 # class NavbarFrame creates a frame that functions as a navbar
 class NavbarFrame(customtkinter.CTkFrame):
     def __init__(self, master):
-        super().__init__(master, fg_color=("gray80", "gray40"), corner_radius=0)
+        super().__init__(master, fg_color=("gray65", "gray40"), corner_radius=0)
 
-        icon_path = os.path.dirname(os.path.realpath(__file__))
-        print(icon_path)
         self.karma_icon_neutral = customtkinter.CTkImage(
-            Image.open(icon_path + "/Icons/neutral_96.png"), size=(32, 32)
+            Image.open(app_path + "/Icons/neutral_96.png"), size=(32, 32)
         )
         self.karma_icon_bad_1 = customtkinter.CTkImage(
-            Image.open(icon_path + "/Icons/bad_1_96.png"), size=(32, 32)
+            Image.open(app_path + "/Icons/bad_1_96.png"), size=(32, 32)
         )
         self.karma_icon_good_1 = customtkinter.CTkImage(
-            Image.open(icon_path + "/Icons/good_1_96.png"), size=(32, 32)
+            Image.open(app_path + "/Icons/good_1_96.png"), size=(32, 32)
         )
         self.karma_icon_good_2 = customtkinter.CTkImage(
-            Image.open(icon_path + "/Icons/good_2_96.png"), size=(32, 32)
+            Image.open(app_path + "/Icons/good_2_96.png"), size=(32, 32)
         )
         self.karma_icon_good_3 = customtkinter.CTkImage(
-            Image.open(icon_path + "/Icons/good_3_96.png"), size=(32, 32)
+            Image.open(app_path + "/Icons/good_3_96.png"), size=(32, 32)
         )
         self.karma_counter = 0
         self.karma_counter_label = customtkinter.CTkLabel(
             self,
             text=f"Karma: {self.karma_counter} | ",
             font=master.app_font,
+            text_color=("white"),
             image=self.karma_icon_neutral,
             compound="right",
         )
         self.karma_counter_label.grid(row=0, column=3, padx=10, pady=10, sticky="e")
         self.switch_icon_light = customtkinter.CTkImage(
-            Image.open(icon_path + "/Icons/light_96.png"), size=(28, 28)
+            Image.open(app_path + "/Icons/light_96.png"), size=(28, 28)
         )
 
         self.mode_switch_var = customtkinter.StringVar(value="off")
@@ -59,10 +61,20 @@ class NavbarFrame(customtkinter.CTkFrame):
             image=self.switch_icon_light,
         )
         self.switch_label.grid(row=0, column=0, padx=(10, 0), pady=10, sticky="w")
-        # self.grid_columnconfigure((0, 1, 2), weight=1)
         self.grid_columnconfigure((2), weight=1)
-
-        self.save_button = customtkinter.CTkButton(self, text="SAVE", width=60)
+        self.save_icon = customtkinter.CTkImage(
+            Image.open(app_path + "/Icons/save_96.png"), size=(28, 28)
+        )
+        self.save_button = customtkinter.CTkButton(
+            self,
+            text="",
+            width=10,
+            command=master.save_data,
+            image=self.save_icon,
+            fg_color=("gray76", "gray54"),
+            hover_color=("gray88", "gray64"),
+            border_spacing=0,
+        )
         self.save_button.grid(row=0, column=2, padx=10, pady=10, sticky="e")
 
     def change_mode(self):
@@ -152,7 +164,7 @@ class TaskListFrame(customtkinter.CTkFrame):
         self.checkboxes = []
         self.row_count = 1
         self.task_list_frame_karma = 0
-        self.tasks = []
+        self.tasks = {}
 
         self.title = customtkinter.CTkLabel(
             self,
@@ -164,9 +176,19 @@ class TaskListFrame(customtkinter.CTkFrame):
         self.title.grid(row=0, column=0, padx=0, pady=(0, 0), sticky="ew")
 
     def add_new_task_to_frame(self, task, t_type):
-        new_task = TaskFrame(self, task, t_type)
+        task_id = str(uuid.uuid4())
+        new_task = TaskFrame(self, task, t_type, id=task_id)
         new_task.grid(row=self.row_count, column=0, padx=10, pady=(10, 0), sticky="ew")
-        self.tasks.append(new_task)
+        self.tasks[task_id] = new_task
+        self.row_count += 1
+
+    def load_task_to_frame(self, task, t_type, t_id, t_done, t_checked):
+        new_task = TaskFrame(self, task, t_type, id=t_id)
+        new_task.grid(row=self.row_count, column=0, padx=10, pady=(10, 0), sticky="ew")
+        self.tasks[t_id] = new_task
+        new_task.done = t_done
+        if t_checked == 1:
+            new_task.checkbox.select()
         self.row_count += 1
 
     def get_task_frame_karma(self):
@@ -179,27 +201,36 @@ class TaskListFrame(customtkinter.CTkFrame):
 
 # class TaskFrame creates a frame which contains a task with a checkbox and a delete button
 class TaskFrame(customtkinter.CTkFrame):
-    def __init__(self, master, task, t_type):
+    def __init__(self, master, task, t_type, id):
         super().__init__(master, fg_color=("gray72", "gray25"))
         self.grid_columnconfigure(0, weight=1)
         self.master = master
         self.done = False
+        self.task = task
         self.t_type = t_type
+        self.id = id
 
+        self.delete_icon = customtkinter.CTkImage(
+            Image.open(app_path + "/Icons/delete_96.png"), size=(25, 25)
+        )
         self.checkbox = customtkinter.CTkCheckBox(
             self, text=task, command=self.task_done, font=("Century Gothic", 13)
         )
         self.checkbox.grid(row=0, column=0, padx=10, pady=10, sticky="w")
         self.checkbox_del_button = customtkinter.CTkButton(
             self,
-            text="X",
+            text="",
             command=self.del_task,
-            width=28,
+            width=10,
             font=("Century Gothic", 13, "bold"),
+            image=self.delete_icon,
+            fg_color="transparent",
+            hover_color=("gray82", "gray40"),
         )
         self.checkbox_del_button.grid(row=0, column=1, padx=10, pady=10, sticky="e")
 
     def del_task(self):
+        self.master.tasks.pop(self.id)
         self.destroy()
 
     def task_done(self):
@@ -247,10 +278,14 @@ class App(customtkinter.CTk):
         )
         self.textbox.grid(row=1, column=0, sticky="nsew", columnspan=2)
 
+        self.delete_icon = customtkinter.CTkImage(
+            Image.open(app_path + "/Icons/delete_96.png"), size=(25, 25)
+        )
         self.clear_button = customtkinter.CTkButton(
             self.tab_view.tab("Ideas"),
             command=self.clear_textbox,
-            text="Clear",
+            text="",
+            image=self.delete_icon,
             width=50,
             font=self.app_font,
         )
@@ -268,7 +303,6 @@ class App(customtkinter.CTk):
         )
         self.font_size_textbox.grid(row=0, column=0, sticky="w", pady=(0, 5))
 
-        # self.tab_view.tab("Ideas").grid(row=0, column=0, sticky="nsew")
         self.tab_view.tab("Ideas").grid_columnconfigure(0, weight=1)
         self.tab_view.tab("Ideas").grid_rowconfigure(1, weight=1)
 
@@ -310,19 +344,16 @@ class App(customtkinter.CTk):
             # Hint to enter a new task
             print("No task")
         else:
-            print("ADDING")
             if t_type == "daily":
-                print("ADDED TO DAILY:")
                 self.checkbox_frame1.add_new_task_to_frame(task, t_type)
             else:
-                print("ADDED TO OPTIONAL:")
                 self.checkbox_frame2.add_new_task_to_frame(task, t_type)
 
     def inc_karma(self, karma):
         self.navbar_frame.update_karma(karma)
 
     def clear_textbox(self):
-        self.clear_button.focus_set()
+        self.tab_view.focus_set()
         self.textbox.delete(0.0, "end")
 
     def set_font_size(self, value):
@@ -333,6 +364,82 @@ class App(customtkinter.CTk):
         else:
             self.textbox.configure(font=("Century Gothic", 42))
 
+    def save_data(self):
+        tasks_daily = self.checkbox_frame1.tasks
+        tasks_optional = self.checkbox_frame2.tasks
+
+        karma_score = self.navbar_frame.karma_counter
+        switch_mode = self.navbar_frame.mode_switch_var.get()
+        tasks_daily_list = []
+        tasks_optional_list = []
+        ideas_text = self.textbox.get(0.0, "end")
+
+        def create_task_dict(tasks, task_list):
+            for task in tasks.values():
+                task_dict = {}
+                task_dict["name"] = task.task
+                task_dict["type"] = task.t_type
+                task_dict["id"] = task.id
+                task_dict["done"] = task.done
+                task_dict["checked"] = task.checkbox.get()
+                task_list.append(task_dict)
+
+        create_task_dict(tasks_daily, tasks_daily_list)
+        create_task_dict(tasks_optional, tasks_optional_list)
+
+        data_dict = {}
+        data_dict["karma"] = karma_score
+        data_dict["mode"] = switch_mode
+        data_dict["daily"] = tasks_daily_list
+        data_dict["optional"] = tasks_optional_list
+        data_dict["ideas"] = ideas_text
+        data_dict["ideas_font"] = self.font_size_var.get()
+
+        data_dict_str = json.dumps(data_dict)
+
+        with open("data.json", "w") as data_json:
+            data_json.write(data_dict_str)
+
+    def load_data(self):
+        with open("data.json", "r") as data_json:
+            data_from_json = data_json.read()
+
+        data_converted = json.loads(data_from_json)
+        self.navbar_frame.karma_counter = data_converted["karma"]
+        self.navbar_frame.karma_counter_label.configure(
+            text=f"Karma: {data_converted['karma']} | "
+        )
+
+        if data_converted["mode"] == "on":
+            self.navbar_frame.mode_switch.toggle()
+
+        def load_tasks(tasks_list):
+            for task in tasks_list:
+                if tasks_list[0]["type"] == "daily":
+                    self.checkbox_frame1.load_task_to_frame(
+                        task["name"],
+                        task["type"],
+                        task["id"],
+                        task["done"],
+                        task["checked"],
+                    )
+                else:
+                    self.checkbox_frame2.load_task_to_frame(
+                        task["name"],
+                        task["type"],
+                        task["id"],
+                        task["done"],
+                        task["checked"],
+                    )
+
+        load_tasks(data_converted["daily"])
+        load_tasks(data_converted["optional"])
+        self.textbox.insert(0.0, data_converted["ideas"])
+        self.set_font_size(data_converted["ideas_font"])
+        self.font_size_var.set(data_converted["ideas_font"])
+        self.navbar_frame.update_karma(0)
+
 
 app = App()
+app.load_data()
 app.mainloop()
