@@ -3,8 +3,9 @@ import tkinter
 import os
 import uuid
 import json
-import time
-from winotify import Notification
+import time as tm
+from datetime import date, datetime
+from winotify import Notification, audio
 from PIL import Image
 
 app_path = os.path.dirname(os.path.realpath(__file__))
@@ -16,7 +17,7 @@ customtkinter.set_default_color_theme("green")
 class NavbarFrame(customtkinter.CTkFrame):
     def __init__(self, master):
         super().__init__(master, fg_color=("gray65", "gray40"), corner_radius=0)
-
+        self.master = master
         self.karma_icon_neutral = customtkinter.CTkImage(
             Image.open(app_path + "/Icons/neutral_96.png"), size=(32, 32)
         )
@@ -70,21 +71,57 @@ class NavbarFrame(customtkinter.CTkFrame):
             image=self.switch_icon_light,
         )
         self.switch_label.grid(row=0, column=0, padx=(10, 0), pady=10, sticky="w")
-        self.grid_columnconfigure((2), weight=1)
         self.save_icon = customtkinter.CTkImage(
             Image.open(app_path + "/Icons/save_96.png"), size=(28, 28)
         )
-        self.save_button = customtkinter.CTkButton(
+        # self.save_button = customtkinter.CTkButton(
+        #     self,
+        #     text="",
+        #     width=10,
+        #     command=master.save_data,
+        #     image=self.save_icon,
+        #     fg_color=("gray76", "gray54"),
+        #     hover_color=("gray88", "gray64"),
+        #     border_spacing=0,
+        # )
+        # self.save_button.grid(row=0, column=3, padx=10, pady=10, sticky="e")
+
+        self.end_of_day_icon = customtkinter.CTkImage(
+            Image.open(app_path + "/Icons/dusk_96.png"), size=(30, 30)
+        )
+        self.end_of_day_label = customtkinter.CTkLabel(
             self,
             text="",
-            width=10,
-            command=master.save_data,
-            image=self.save_icon,
-            fg_color=("gray76", "gray54"),
-            hover_color=("gray88", "gray64"),
-            border_spacing=0,
+            image=self.end_of_day_icon,
         )
-        self.save_button.grid(row=0, column=3, padx=10, pady=10, sticky="e")
+        self.end_of_day_label.grid(
+            row=0, column=2, padx=(0, 10), pady=(5, 0), sticky="e"
+        )
+        self.end_of_day_var = customtkinter.StringVar(value="00:00")
+        self.end_of_day = customtkinter.CTkOptionMenu(
+            self,
+            values=[
+                "12:00",
+                "13:00",
+                "14:00",
+                "15:00",
+                "16:00",
+                "17:00",
+                "18:00",
+                "19:00",
+                "20:00",
+                "21:00",
+                "22:00",
+                "23:00",
+                "00:00",
+            ],
+            variable=self.end_of_day_var,
+            dynamic_resizing=True,
+            width=100,
+            font=("Century Gothic", 15),
+        )
+        self.end_of_day.grid(row=0, column=3, sticky="w", padx=(0, 10), pady=10)
+        self.grid_columnconfigure((2), weight=1)
 
     def change_mode(self):
         if self.mode_switch_var.get() == "off":
@@ -164,7 +201,7 @@ class TaskInputFrame(customtkinter.CTkFrame):
 
 
 # class TaskListFrame creates a frame in which newly created TaskFrame objects will be stored
-class TaskListFrame(customtkinter.CTkFrame):
+class TaskListFrame(customtkinter.CTkScrollableFrame):
     def __init__(self, master, title, height, width):
         super().__init__(master, height=height, width=width)
         self.grid_columnconfigure(0, weight=1)
@@ -175,14 +212,14 @@ class TaskListFrame(customtkinter.CTkFrame):
         self.task_list_frame_karma = 0
         self.tasks = {}
 
-        self.title = customtkinter.CTkLabel(
-            self,
-            text=self.title,
-            fg_color=("gray70", "gray35"),
-            corner_radius=6,
-            font=master.master.master.app_font,
-        )
-        self.title.grid(row=0, column=0, padx=0, pady=(0, 0), sticky="ew")
+        # self.title = customtkinter.CTkLabel(
+        #     self,
+        #     text=self.title,
+        #     fg_color=("gray70", "gray35"),
+        #     corner_radius=6,
+        #     font=master.master.master.app_font,
+        # )
+        # self.title.grid(row=0, column=0, padx=0, pady=(0, 0), sticky="ew")
 
     def add_new_task_to_frame(self, task, t_type):
         task_id = str(uuid.uuid4())
@@ -269,11 +306,13 @@ class App(customtkinter.CTk):
         self.alert_msg = Notification(
             app_id="Memoboard",
             title="Feierabend",
-            msg="Gute Arbeit. Lassen den Tag ausklingen.",
+            msg="Gute Arbeit. Lass den Tag ausklingen.",
             duration="long",
             icon=app_path + "/Icons/memory_64.png",
         )
-        self.clock()
+        self.alert_msg.set_audio(audio.Reminder, loop=False)
+        self.current_date = date.today()
+        self.tmr_date = date(2023, 9, 5)
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
@@ -291,7 +330,9 @@ class App(customtkinter.CTk):
         self.tab_view.tab("Tasks").grid_rowconfigure(1, weight=1)
 
         self.textbox = customtkinter.CTkTextbox(
-            self.tab_view.tab("Ideas"), font=("Century Gothic", 32), fg_color="gray10"
+            self.tab_view.tab("Ideas"),
+            font=("Century Gothic", 32),
+            fg_color=("white", "gray10"),
         )
         self.textbox.grid(row=1, column=0, sticky="nsew", columnspan=2)
 
@@ -330,18 +371,28 @@ class App(customtkinter.CTk):
             width=self.f_width,
             height=self.f_height,
         )
+        self.checkbox_frame1.configure(
+            label_text="Daily",
+            label_font=self.app_font,
+            label_fg_color=("gray70", "gray35"),
+        )
         self.checkbox_frame1.grid(row=1, column=0, padx=10, pady=(10, 0), sticky="nsew")
-        self.checkbox_frame1.grid_propagate(False)
+        # self.checkbox_frame1.grid_propagate(False)
         self.checkbox_frame2 = TaskListFrame(
             self.tab_view.tab("Tasks"),
             "Optional",
             width=self.f_width,
             height=self.f_height,
         )
+        self.checkbox_frame2.configure(
+            label_text="Optional",
+            label_font=self.app_font,
+            label_fg_color=("gray70", "gray35"),
+        )
         self.checkbox_frame2.grid(
             row=1, column=1, padx=(0, 10), pady=(10, 0), sticky="nsew"
         )
-        self.checkbox_frame2.grid_propagate(False)
+        # self.checkbox_frame2.grid_propagate(False)
 
         # self.checkbox_frame1.configure(fg_color="transparent")
         # self.checkbox_frame2.configure(fg_color="transparent")
@@ -352,10 +403,16 @@ class App(customtkinter.CTk):
             row=2, column=0, padx=10, pady=10, sticky="nsew", columnspan=2
         )
 
+    # test method
+    # def set_tmr(self):
+    #     tm.sleep(5.0)
+    #     self.tmr_date = date(2023, 9, 6)
+
     def add_new_task(self):
         task, t_type = self.new_task_frame.get_new_task()
         if task == "NOTHING_CHOSEN":
             # Hint to choose an option
+            # self.set_tmr()
             print("Nothing chosen")
         elif task == "NO_TASK":
             # Hint to enter a new task
@@ -387,6 +444,7 @@ class App(customtkinter.CTk):
 
         karma_score = self.navbar_frame.karma_counter
         switch_mode = self.navbar_frame.mode_switch_var.get()
+        day_end = self.navbar_frame.end_of_day_var.get()
         tasks_daily_list = []
         tasks_optional_list = []
         ideas_text = self.textbox.get(0.0, "end").strip("\n")
@@ -407,10 +465,14 @@ class App(customtkinter.CTk):
         data_dict = {}
         data_dict["karma"] = karma_score
         data_dict["mode"] = switch_mode
+        data_dict["day_end"] = day_end
         data_dict["daily"] = tasks_daily_list
         data_dict["optional"] = tasks_optional_list
         data_dict["ideas"] = ideas_text
         data_dict["ideas_font"] = self.font_size_var.get()
+        data_dict["day"] = self.current_date.day
+        data_dict["month"] = self.current_date.month
+        data_dict["year"] = self.current_date.year
 
         data_dict_str = json.dumps(data_dict)
 
@@ -426,6 +488,7 @@ class App(customtkinter.CTk):
         self.navbar_frame.karma_counter_label.configure(
             text=f"Karma: {data_converted['karma']} | "
         )
+        self.navbar_frame.end_of_day_var.set(data_converted["day_end"])
 
         if data_converted["mode"] == "on":
             self.navbar_frame.mode_switch.toggle()
@@ -454,20 +517,52 @@ class App(customtkinter.CTk):
         self.textbox.insert(0.0, data_converted["ideas"])
         self.set_font_size(data_converted["ideas_font"])
         self.font_size_var.set(data_converted["ideas_font"])
+        self.current_date = date(
+            data_converted["year"], data_converted["month"], data_converted["day"]
+        )
+        # update karma icon image according to karma score when starting app
         self.navbar_frame.update_karma(0)
 
     def clock(self):
-        real_time = time.strftime("%H:%M:%S")
+        current_time = datetime.now().strftime("%H:%M:%S")
+        today = date.today()
         self.after(1000, self.clock)
-        if real_time == "22:20:00":
+        set_time = self.navbar_frame.end_of_day_var.get() + ":00"
+
+        if current_time == set_time:
+            self.check_today_karma()
             self.alert_msg.show()
+        if self.current_date < today:
+            self.reset_tasks(today)
 
     def auto_save(self):
         self.save_data()
         self.after(10000, self.auto_save)
 
+    def reset_tasks(self, today):
+        for task in self.checkbox_frame1.tasks.values():
+            if task.checkbox.get() == 1:
+                task.checkbox.toggle()
+        list_opt_done = []
+        print(self.checkbox_frame2.tasks)
+        for key, task in self.checkbox_frame2.tasks.items():
+            if task.checkbox.get() == 1:
+                list_opt_done.append(key)
+                task.destroy()
+        for key in list_opt_done:
+            self.checkbox_frame2.tasks.pop(key)
+        print(self.checkbox_frame2.tasks)
+        self.navbar_frame.karma_counter = 0
+        self.navbar_frame.update_karma(0)
+        self.current_date = today
+
+    def check_today_karma(self):
+        pass
+
 
 app = App()
+# check if data.json initially exists
 app.load_data()
+app.clock()
 app.auto_save()
 app.mainloop()
