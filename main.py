@@ -18,8 +18,16 @@ class NavbarFrame(customtkinter.CTkFrame):
     def __init__(self, master):
         super().__init__(master, fg_color=("gray65", "gray40"), corner_radius=0)
         self.master = master
+        self.icon_path = app_path + "/Icons/neutral_96.png"
+        self.karma_message = "Consistency is everything. Keep going."
         self.karma_icon_neutral = customtkinter.CTkImage(
             Image.open(app_path + "/Icons/neutral_96.png"), size=(32, 32)
+        )
+        self.karma_icon_bad_3 = customtkinter.CTkImage(
+            Image.open(app_path + "/Icons/bad_3_96.png"), size=(32, 32)
+        )
+        self.karma_icon_bad_2 = customtkinter.CTkImage(
+            Image.open(app_path + "/Icons/bad_2_96.png"), size=(32, 32)
         )
         self.karma_icon_bad_1 = customtkinter.CTkImage(
             Image.open(app_path + "/Icons/bad_1_96.png"), size=(32, 32)
@@ -131,15 +139,35 @@ class NavbarFrame(customtkinter.CTkFrame):
 
     def update_karma(self, karma):
         self.karma_counter += karma
+        print(self.karma_counter)
+        print(self.karma_counter in range(-1, -501))
         self.karma_counter_label.configure(text=f"{self.karma_counter} | ")
-        if self.karma_counter in range(1, 501):
+        if self.karma_counter in range(1, 1500):
             self.karma_counter_label.configure(image=self.karma_icon_good_1)
-        elif self.karma_counter in range(502, 1001):
+            self.icon_path = app_path + "/Icons/good_1_96.png"
+            self.karma_message = "Good work! :)"
+        elif self.karma_counter in range(1500, 3000):
             self.karma_counter_label.configure(image=self.karma_icon_good_2)
-        elif self.karma_counter > 1000:
+            self.icon_path = app_path + "/Icons/good_2_96.png"
+            self.karma_message = "Great day, keep it that way. ;)"
+        elif self.karma_counter >= 3000:
             self.karma_counter_label.configure(image=self.karma_icon_good_3)
-        elif self.karma_counter in range(-1, -501):
+            self.icon_path = app_path + "/Icons/good_3_96.png"
+            self.karma_message = "You're awesome :D The world is yours!"
+        elif self.karma_counter in range(-499, 0):
             self.karma_counter_label.configure(image=self.karma_icon_bad_1)
+            self.icon_path = app_path + "/Icons/bad_1_96.png"
+            self.karma_message = "Don't worry, tomorrow will be better."
+        elif self.karma_counter in range(-999, -499):
+            self.karma_counter_label.configure(image=self.karma_icon_bad_2)
+            self.icon_path = app_path + "/Icons/bad_2_96.png"
+            self.karma_message = "Just try to stick to your habits."
+        elif self.karma_counter <= -1000:
+            self.karma_counter_label.configure(image=self.karma_icon_bad_3)
+            self.icon_path = app_path + "/Icons/bad_3_96.png"
+            self.karma_message = (
+                "Days like this happen. Shake it off and get a good night's sleep."
+            )
         else:
             self.karma_counter_label.configure(image=self.karma_icon_neutral)
 
@@ -282,15 +310,15 @@ class TaskFrame(customtkinter.CTkFrame):
     def task_done(self):
         if self.done is False:
             if self.t_type == "daily":
-                self.master.master.master.master.inc_karma(500)
+                self.master.master.master.master.inc_karma(300)
             else:
-                self.master.master.master.master.inc_karma(100)
+                self.master.master.master.master.inc_karma(300)
             self.done = True
         elif self.done is True:
             if self.t_type == "daily":
-                self.master.master.master.master.inc_karma(-500)
+                self.master.master.master.master.inc_karma(-300)
             else:
-                self.master.master.master.master.inc_karma(-100)
+                self.master.master.master.master.inc_karma(-300)
             self.done = False
 
 
@@ -531,7 +559,6 @@ class App(customtkinter.CTk):
 
         if current_time == set_time:
             self.check_today_karma()
-            self.alert_msg.show()
         if self.current_date < today:
             self.reset_tasks(today)
 
@@ -544,20 +571,44 @@ class App(customtkinter.CTk):
             if task.checkbox.get() == 1:
                 task.checkbox.toggle()
         list_opt_done = []
-        print(self.checkbox_frame2.tasks)
+        # print(self.checkbox_frame2.tasks)
         for key, task in self.checkbox_frame2.tasks.items():
             if task.checkbox.get() == 1:
                 list_opt_done.append(key)
                 task.destroy()
         for key in list_opt_done:
             self.checkbox_frame2.tasks.pop(key)
-        print(self.checkbox_frame2.tasks)
+        # print(self.checkbox_frame2.tasks)
         self.navbar_frame.karma_counter = 0
         self.navbar_frame.update_karma(0)
         self.current_date = today
 
     def check_today_karma(self):
-        pass
+        def count_unchecked_tasks(task_list):
+            unchecked_tasks = 0
+            for task in task_list.tasks.values():
+                if task.checkbox.get() == 0:
+                    unchecked_tasks += 1
+                task.checkbox.configure(state="disabled")
+            return unchecked_tasks
+
+        unchecked_daily, unchecked_opt = count_unchecked_tasks(
+            self.checkbox_frame1
+        ), count_unchecked_tasks(self.checkbox_frame2)
+
+        self.navbar_frame.update_karma(
+            (unchecked_daily * -300) + (unchecked_opt * -100)
+        )
+
+        karma_alert_msg = Notification(
+            app_id="Memoboard",
+            title="Feierabend",
+            msg=self.navbar_frame.karma_message,
+            duration="long",
+            icon=self.navbar_frame.icon_path,
+        )
+        karma_alert_msg.set_audio(audio.Reminder, loop=False)
+        karma_alert_msg.show()
 
 
 app = App()
