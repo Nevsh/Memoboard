@@ -48,7 +48,7 @@ class NavbarFrame(customtkinter.CTkFrame):
             font=master.app_font,
             text_color=("white"),
         )
-        self.karma_label.grid(row=0, column=4, padx=(10, 90), pady=10, sticky="e")
+        self.karma_label.grid(row=0, column=4, padx=(10, 100), pady=10, sticky="e")
         self.karma_counter_label = customtkinter.CTkLabel(
             self,
             text=f"{self.karma_counter} | ",
@@ -230,6 +230,8 @@ class TaskInputFrame(customtkinter.CTkFrame):
 
 # class TaskListFrame creates a frame in which newly created TaskFrame objects will be stored
 class TaskListFrame(customtkinter.CTkScrollableFrame):
+    end_of_day = False
+
     def __init__(self, master, title, height, width):
         super().__init__(master, height=height, width=width)
         self.grid_columnconfigure(0, weight=1)
@@ -251,13 +253,16 @@ class TaskListFrame(customtkinter.CTkScrollableFrame):
 
     def add_new_task_to_frame(self, task, t_type):
         task_id = str(uuid.uuid4())
-        new_task = TaskFrame(self, task, t_type, t_id=task_id)
+        new_task = TaskFrame(self, task, t_type, t_id=task_id, t_state="normal")
         new_task.grid(row=self.row_count, column=0, padx=10, pady=(10, 0), sticky="ew")
         self.tasks[task_id] = new_task
         self.row_count += 1
+        print(self.end_of_day)
+        if TaskListFrame.end_of_day is True:
+            new_task.checkbox.configure(state="disabled")
 
-    def load_task_to_frame(self, task, t_type, t_id, t_done, t_checked):
-        new_task = TaskFrame(self, task, t_type, t_id=t_id)
+    def load_task_to_frame(self, task, t_type, t_id, t_done, t_checked, t_state):
+        new_task = TaskFrame(self, task, t_type, t_id=t_id, t_state=t_state)
         new_task.grid(row=self.row_count, column=0, padx=10, pady=(10, 0), sticky="ew")
         self.tasks[t_id] = new_task
         new_task.done = t_done
@@ -275,7 +280,7 @@ class TaskListFrame(customtkinter.CTkScrollableFrame):
 
 # class TaskFrame creates a frame which contains a task with a checkbox and a delete button
 class TaskFrame(customtkinter.CTkFrame):
-    def __init__(self, master, task, t_type, t_id):
+    def __init__(self, master, task, t_type, t_id, t_state):
         super().__init__(master, fg_color=("gray90", "gray27"))
         self.grid_columnconfigure(0, weight=1)
         self.master = master
@@ -283,12 +288,17 @@ class TaskFrame(customtkinter.CTkFrame):
         self.task = task
         self.t_type = t_type
         self.t_id = t_id
+        self.t_state = t_state
 
         self.delete_icon = customtkinter.CTkImage(
             Image.open(app_path + "/Icons/delete_96.png"), size=(25, 25)
         )
         self.checkbox = customtkinter.CTkCheckBox(
-            self, text=task, command=self.task_done, font=("Century Gothic", 13)
+            self,
+            text=task,
+            command=self.task_done,
+            font=("Century Gothic", 13),
+            state=self.t_state,
         )
         self.checkbox.grid(row=0, column=0, padx=10, pady=10, sticky="w")
         self.checkbox_del_button = customtkinter.CTkButton(
@@ -472,7 +482,7 @@ class App(customtkinter.CTk):
 
         karma_score = self.navbar_frame.karma_counter
         switch_mode = self.navbar_frame.mode_switch_var.get()
-        day_end = self.navbar_frame.end_of_day_var.get()
+        day_end_time = self.navbar_frame.end_of_day_var.get()
         tasks_daily_list = []
         tasks_optional_list = []
         ideas_text = self.textbox.get(0.0, "end").strip("\n")
@@ -485,6 +495,7 @@ class App(customtkinter.CTk):
                 task_dict["id"] = task.t_id
                 task_dict["done"] = task.done
                 task_dict["checked"] = task.checkbox.get()
+                task_dict["state"] = task.checkbox.cget("state")
                 task_list.append(task_dict)
 
         create_task_dict(tasks_daily, tasks_daily_list)
@@ -493,7 +504,7 @@ class App(customtkinter.CTk):
         data_dict = {}
         data_dict["karma"] = karma_score
         data_dict["mode"] = switch_mode
-        data_dict["day_end"] = day_end
+        data_dict["day_end_time"] = day_end_time
         data_dict["daily"] = tasks_daily_list
         data_dict["optional"] = tasks_optional_list
         data_dict["ideas"] = ideas_text
@@ -501,6 +512,7 @@ class App(customtkinter.CTk):
         data_dict["day"] = self.current_date.day
         data_dict["month"] = self.current_date.month
         data_dict["year"] = self.current_date.year
+        data_dict["day_end_state"] = TaskListFrame.end_of_day
 
         data_dict_str = json.dumps(data_dict)
 
@@ -516,7 +528,7 @@ class App(customtkinter.CTk):
         self.navbar_frame.karma_counter_label.configure(
             text=f"Karma: {data_converted['karma']} | "
         )
-        self.navbar_frame.end_of_day_var.set(data_converted["day_end"])
+        self.navbar_frame.end_of_day_var.set(data_converted["day_end_time"])
 
         if data_converted["mode"] == "on":
             self.navbar_frame.mode_switch.toggle()
@@ -530,6 +542,7 @@ class App(customtkinter.CTk):
                         task["id"],
                         task["done"],
                         task["checked"],
+                        task["state"],
                     )
                 else:
                     self.checkbox_frame2.load_task_to_frame(
@@ -538,6 +551,7 @@ class App(customtkinter.CTk):
                         task["id"],
                         task["done"],
                         task["checked"],
+                        task["state"],
                     )
 
         load_tasks(data_converted["daily"])
@@ -548,6 +562,7 @@ class App(customtkinter.CTk):
         self.current_date = date(
             data_converted["year"], data_converted["month"], data_converted["day"]
         )
+        TaskListFrame.end_of_day = data_converted["day_end_state"]
         # update karma icon image according to karma score when starting app
         self.navbar_frame.update_karma(0)
 
@@ -558,21 +573,28 @@ class App(customtkinter.CTk):
         set_time = self.navbar_frame.end_of_day_var.get() + ":00"
 
         if current_time == set_time:
+            # if current_time == "00:19:00":
             self.check_today_karma()
+            TaskListFrame.end_of_day = True
         if self.current_date < today:
+            # if self.current_date < date(2023, 9, 7):
             self.reset_tasks(today)
+        # self.reset_tasks(date(2023, 9, 7))
 
     def auto_save(self):
         self.save_data()
         self.after(10000, self.auto_save)
 
     def reset_tasks(self, today):
+        self.notify_about_karma("START")
         for task in self.checkbox_frame1.tasks.values():
+            task.checkbox.configure(state="normal")
             if task.checkbox.get() == 1:
                 task.checkbox.toggle()
         list_opt_done = []
         # print(self.checkbox_frame2.tasks)
         for key, task in self.checkbox_frame2.tasks.items():
+            task.checkbox.configure(state="normal")
             if task.checkbox.get() == 1:
                 list_opt_done.append(key)
                 task.destroy()
@@ -582,6 +604,9 @@ class App(customtkinter.CTk):
         self.navbar_frame.karma_counter = 0
         self.navbar_frame.update_karma(0)
         self.current_date = today
+        TaskListFrame.end_of_day = False
+
+        # new_task.checkbox.configure(state="disabled")
 
     def check_today_karma(self):
         def count_unchecked_tasks(task_list):
@@ -600,13 +625,34 @@ class App(customtkinter.CTk):
             (unchecked_daily * -300) + (unchecked_opt * -100)
         )
 
-        karma_alert_msg = Notification(
-            app_id="Memoboard",
-            title="Feierabend",
-            msg=self.navbar_frame.karma_message,
-            duration="long",
-            icon=self.navbar_frame.icon_path,
-        )
+        self.notify_about_karma("END")
+        # karma_alert_msg = Notification(
+        #     app_id="Memoboard",
+        #     title="Feierabend",
+        #     msg=self.navbar_frame.karma_message,
+        #     duration="long",
+        #     icon=self.navbar_frame.icon_path,
+        # )
+        # karma_alert_msg.set_audio(audio.Reminder, loop=False)
+        # karma_alert_msg.show()
+
+    def notify_about_karma(self, timing):
+        if timing == "END":
+            karma_alert_msg = Notification(
+                app_id="Memoboard",
+                title="That's it for today",
+                msg=self.navbar_frame.karma_message,
+                duration="long",
+                icon=self.navbar_frame.icon_path,
+            )
+        else:
+            karma_alert_msg = Notification(
+                app_id="Memoboard",
+                title="Yesterday",
+                msg=f"\nKarma: {self.navbar_frame.karma_counter}",
+                duration="long",
+                icon=self.navbar_frame.icon_path,
+            )
         karma_alert_msg.set_audio(audio.Reminder, loop=False)
         karma_alert_msg.show()
 
