@@ -8,6 +8,8 @@ from datetime import date, datetime
 from winotify import Notification, audio
 from PIL import Image
 
+# icons downloaded from https://icons8.com
+
 app_path = os.path.dirname(os.path.realpath(__file__))
 customtkinter.set_appearance_mode("dark")
 customtkinter.set_default_color_theme("green")
@@ -18,28 +20,28 @@ class NavbarFrame(customtkinter.CTkFrame):
     def __init__(self, master):
         super().__init__(master, fg_color=("gray65", "gray40"), corner_radius=0)
         self.master = master
-        self.icon_path = app_path + "/Icons/neutral_96.png"
+        self.icon_path = app_path + "/Icons/neutral_100.png"
         self.karma_message = "Consistency is everything. Keep going."
         self.karma_icon_neutral = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/neutral_96.png"), size=(32, 32)
+            Image.open(app_path + "/Icons/neutral_100.png"), size=(32, 32)
         )
         self.karma_icon_bad_3 = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/bad_3_96.png"), size=(32, 32)
+            Image.open(app_path + "/Icons/bad_3_100.png"), size=(32, 32)
         )
         self.karma_icon_bad_2 = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/bad_2_96.png"), size=(32, 32)
+            Image.open(app_path + "/Icons/bad_2_100.png"), size=(32, 32)
         )
         self.karma_icon_bad_1 = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/bad_1_96.png"), size=(32, 32)
+            Image.open(app_path + "/Icons/bad_1_100.png"), size=(32, 32)
         )
         self.karma_icon_good_1 = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/good_1_96.png"), size=(32, 32)
+            Image.open(app_path + "/Icons/good_1_100.png"), size=(32, 32)
         )
         self.karma_icon_good_2 = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/good_2_96.png"), size=(32, 32)
+            Image.open(app_path + "/Icons/good_2_100.png"), size=(32, 32)
         )
         self.karma_icon_good_3 = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/good_3_96.png"), size=(32, 32)
+            Image.open(app_path + "/Icons/good_3_100.png"), size=(32, 32)
         )
         self.karma_counter = 0
         self.karma_label = customtkinter.CTkLabel(
@@ -59,7 +61,7 @@ class NavbarFrame(customtkinter.CTkFrame):
         )
         self.karma_counter_label.grid(row=0, column=4, padx=10, pady=10, sticky="e")
         self.switch_icon_light = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/light_96.png"), size=(28, 28)
+            Image.open(app_path + "/Icons/light_78.png"), size=(32, 32)
         )
 
         self.mode_switch_var = customtkinter.StringVar(value="off")
@@ -144,27 +146,27 @@ class NavbarFrame(customtkinter.CTkFrame):
         self.karma_counter_label.configure(text=f"{self.karma_counter} | ")
         if self.karma_counter in range(1, 1500):
             self.karma_counter_label.configure(image=self.karma_icon_good_1)
-            self.icon_path = app_path + "/Icons/good_1_96.png"
+            self.icon_path = app_path + "/Icons/good_1_100.png"
             self.karma_message = "Good work! :)"
         elif self.karma_counter in range(1500, 3000):
             self.karma_counter_label.configure(image=self.karma_icon_good_2)
-            self.icon_path = app_path + "/Icons/good_2_96.png"
+            self.icon_path = app_path + "/Icons/good_2_100.png"
             self.karma_message = "Great day, keep it that way. ;)"
         elif self.karma_counter >= 3000:
             self.karma_counter_label.configure(image=self.karma_icon_good_3)
-            self.icon_path = app_path + "/Icons/good_3_96.png"
+            self.icon_path = app_path + "/Icons/good_3_100.png"
             self.karma_message = "You're awesome :D The world is yours!"
         elif self.karma_counter in range(-499, 0):
             self.karma_counter_label.configure(image=self.karma_icon_bad_1)
-            self.icon_path = app_path + "/Icons/bad_1_96.png"
+            self.icon_path = app_path + "/Icons/bad_1_100.png"
             self.karma_message = "Don't worry, tomorrow will be better."
         elif self.karma_counter in range(-999, -499):
             self.karma_counter_label.configure(image=self.karma_icon_bad_2)
-            self.icon_path = app_path + "/Icons/bad_2_96.png"
+            self.icon_path = app_path + "/Icons/bad_2_100.png"
             self.karma_message = "Just try to stick to your habits."
         elif self.karma_counter <= -1000:
             self.karma_counter_label.configure(image=self.karma_icon_bad_3)
-            self.icon_path = app_path + "/Icons/bad_3_96.png"
+            self.icon_path = app_path + "/Icons/bad_3_100.png"
             self.karma_message = (
                 "Days like this happen. Shake it off and get a good night's sleep."
             )
@@ -343,14 +345,17 @@ class App(customtkinter.CTk):
         self.app_font = customtkinter.CTkFont("Century Gothic", 15, "bold")
         self.alert_msg = Notification(
             app_id="Memoboard",
-            title="Feierabend",
-            msg="Gute Arbeit. Lass den Tag ausklingen.",
+            title="Alarm",
+            msg="Time is up",
             duration="long",
             icon=app_path + "/Icons/memory_64.png",
         )
         self.alert_msg.set_audio(audio.Reminder, loop=False)
         self.current_date = date.today()
-        self.tmr_date = date(2023, 9, 5)
+        self.timer_time = 0
+        self.timer_time_id = ""
+        self.countdown_set = False
+        # self.tmr_date = date(2023, 9, 5)
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
@@ -364,8 +369,81 @@ class App(customtkinter.CTk):
         self.tab_view.grid(row=1, column=0, padx=10, pady=(0, 10), sticky="nsew")
         self.tab_view.add("Tasks")
         self.tab_view.add("Ideas")
+        self.tab_view.add("Timer")
         self.tab_view.tab("Tasks").grid_columnconfigure((0, 1), weight=1)
         self.tab_view.tab("Tasks").grid_rowconfigure(1, weight=1)
+
+        self.countdown_icon = customtkinter.CTkImage(
+            Image.open(app_path + "/Icons/hourglass_96.png"), size=(26, 26)
+        )
+        self.alarm_icon = customtkinter.CTkImage(
+            Image.open(app_path + "/Icons/alarm_100.png"), size=(26, 26)
+        )
+        self.countdown = customtkinter.CTkEntry(
+            self.tab_view.tab("Timer"), placeholder_text="00:00:00", width=62
+        )
+        self.countdown.place(relx=0.5, rely=0.1, anchor=tkinter.CENTER)
+        self.countdown_btn = customtkinter.CTkButton(
+            self.tab_view.tab("Timer"),
+            text="",
+            image=self.countdown_icon,
+            width=60,
+            command=self.set_countdown,
+        )
+        self.countdown_btn.place(relx=0.4, rely=0.1, anchor=tkinter.CENTER)
+        self.alarm_save_btn = customtkinter.CTkButton(
+            self.tab_view.tab("Timer"), text="", image=self.alarm_icon, width=60
+        )
+        self.alarm_save_btn.place(relx=0.6, rely=0.1, anchor=tkinter.CENTER)
+
+        self.timer = customtkinter.CTkLabel(
+            self.tab_view.tab("Timer"),
+            text="00:00:00",
+            font=("Century Gothic", 48, "bold"),
+            width=300,
+            height=100,
+            fg_color=("gray70", "gray30"),
+            corner_radius=10,
+        )
+        self.timer.place(relx=0.5, rely=0.25, anchor=tkinter.CENTER)
+        self.timer_start_icon = customtkinter.CTkImage(
+            Image.open(app_path + "/Icons/start_90.png"), size=(26, 26)
+        )
+        self.timer_pause_icon = customtkinter.CTkImage(
+            Image.open(app_path + "/Icons/pause_90.png"), size=(26, 26)
+        )
+        self.timer_reset_icon = customtkinter.CTkImage(
+            Image.open(app_path + "/Icons/reset_100.png"), size=(26, 26)
+        )
+        self.timer_start_btn = customtkinter.CTkButton(
+            self.tab_view.tab("Timer"),
+            text="",
+            image=self.timer_start_icon,
+            font=self.app_font,
+            width=60,
+            command=self.run_timer,
+        )
+        self.timer_start_btn.place(relx=0.4, rely=0.4, anchor=tkinter.CENTER)
+        self.timer_stop_btn = customtkinter.CTkButton(
+            self.tab_view.tab("Timer"),
+            text="",
+            image=self.timer_pause_icon,
+            font=self.app_font,
+            width=60,
+            command=self.stop_timer,
+        )
+        self.timer_stop_btn.place(relx=0.5, rely=0.4, anchor=tkinter.CENTER)
+        self.timer_reset_btn = customtkinter.CTkButton(
+            self.tab_view.tab("Timer"),
+            text="",
+            image=self.timer_reset_icon,
+            font=self.app_font,
+            width=60,
+            command=self.reset_timer,
+        )
+        self.timer_reset_btn.place(relx=0.6, rely=0.4, anchor=tkinter.CENTER)
+
+        self.tab_view.columnconfigure(0, weight=1)
 
         self.textbox = customtkinter.CTkTextbox(
             self.tab_view.tab("Ideas"),
@@ -375,7 +453,7 @@ class App(customtkinter.CTk):
         self.textbox.grid(row=1, column=0, sticky="nsew", columnspan=2)
 
         self.delete_icon = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/delete_96.png"), size=(25, 25)
+            Image.open(app_path + "/Icons/clean_90.png"), size=(25, 25)
         )
         self.clear_button = customtkinter.CTkButton(
             self.tab_view.tab("Ideas"),
@@ -580,6 +658,70 @@ class App(customtkinter.CTk):
             # if self.current_date < date(2023, 9, 7):
             self.reset_tasks(today)
         # self.reset_tasks(date(2023, 9, 7))
+
+    def run_timer(self):
+        self.timer_start_btn.configure(state="disabled", fg_color=("gray40", "gray60"))
+        self.countdown_btn.configure(state="disabled", fg_color=("gray40", "gray60"))
+        print(self.timer_time)
+        seconds = self.timer_time % 60
+        minutes = int((self.timer_time / 60) % 60)
+        hours = int((self.timer_time / 3600) % 24)
+        print(hours, minutes, seconds)
+        print(self.countdown_set)
+        current_time = f"{hours:02}:{minutes:02}:{seconds:02}"
+        self.timer.configure(text=current_time)
+        if current_time == "00:00:00" and self.countdown_set is True:
+            self.alert_msg.show()
+            self.reset_timer()
+            return
+        if self.countdown_set is True:
+            self.timer_time -= 1
+        else:
+            self.timer_time += 1
+        self.timer_time_id = self.after(1000, self.run_timer)
+
+    def stop_timer(self):
+        self.after_cancel(self.timer_time_id)
+        if self.countdown_set is True:
+            # self.timer_start_btn.configure(state="disabled")
+            self.countdown_btn.configure(
+                state="normal", fg_color=("#2CC985", "#2FA572")
+            )
+        else:
+            self.timer_start_btn.configure(
+                state="normal", fg_color=("#2CC985", "#2FA572")
+            )
+            # self.countdown_btn.configure(state="disabled")
+        # self.countdown_set = False
+
+    def reset_timer(self):
+        self.timer_time = 0
+        self.timer.configure(text="00:00:00")
+        self.countdown_set = False
+        self.timer_start_btn.configure(state="normal", fg_color=("#2CC985", "#2FA572"))
+        self.countdown_btn.configure(state="normal", fg_color=("#2CC985", "#2FA572"))
+        self.stop_timer()
+
+    def set_countdown(self):
+        time_str = self.countdown.get()
+        time_list = time_str.split(":")
+        int_time_list = [int(x) for x in time_list]
+        print(int_time_list)
+        time_in_seconds = (
+            int_time_list[0] * 3600 + int_time_list[1] * 60 + int_time_list[2]
+        )
+        print(time_in_seconds)
+        if self.countdown_set is False:
+            self.timer_time = time_in_seconds
+        self.countdown_set = True
+        # self.countdown_btn.configure(state="disabled")
+        self.run_timer()
+        # seconds = self.timer_time % 60
+        # minutes = int((self.timer_time / 60) % 60)
+        # hours = int((self.timer_time / 3600) % 24)
+        # self.timer.configure(text=f"{hours:02}:{minutes:02}:{seconds:02}")
+        # self.timer_time -= 1
+        # self.timer_time_id = self.after(1000, self.run_timer)
 
     def auto_save(self):
         self.save_data()
