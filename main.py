@@ -4,6 +4,7 @@ import os
 import uuid
 import json
 import time as tm
+import re
 from datetime import date, datetime
 from winotify import Notification, audio
 from PIL import Image
@@ -141,8 +142,6 @@ class NavbarFrame(customtkinter.CTkFrame):
 
     def update_karma(self, karma):
         self.karma_counter += karma
-        print(self.karma_counter)
-        print(self.karma_counter in range(-1, -501))
         self.karma_counter_label.configure(text=f"{self.karma_counter} | ")
         if self.karma_counter in range(1, 1500):
             self.karma_counter_label.configure(image=self.karma_icon_good_1)
@@ -259,7 +258,6 @@ class TaskListFrame(customtkinter.CTkScrollableFrame):
         new_task.grid(row=self.row_count, column=0, padx=10, pady=(10, 0), sticky="ew")
         self.tasks[task_id] = new_task
         self.row_count += 1
-        print(self.end_of_day)
         if TaskListFrame.end_of_day is True:
             new_task.checkbox.configure(state="disabled")
 
@@ -334,6 +332,156 @@ class TaskFrame(customtkinter.CTkFrame):
             self.done = False
 
 
+class TimeFrame(customtkinter.CTkFrame):
+    def __init__(self, master):
+        super().__init__(master)
+        self.timer_time = 0
+        self.timer_time_id = ""
+        self.countdown_set = False
+        self.countdown = customtkinter.CTkEntry(
+            self, placeholder_text="00:00:00", width=62
+        )
+        self.countdown.grid(row=0, column=1, sticky="ns", padx=10, pady=10)
+        self.countdown_icon = customtkinter.CTkImage(
+            Image.open(app_path + "/Icons/hourglass_96.png"), size=(26, 26)
+        )
+        self.countdown_btn = customtkinter.CTkButton(
+            self,
+            text="",
+            image=self.countdown_icon,
+            width=60,
+            command=self.set_countdown,
+        )
+        self.countdown_btn.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+        self.alarm_icon = customtkinter.CTkImage(
+            Image.open(app_path + "/Icons/alarm_100.png"), size=(26, 26)
+        )
+        self.alarm_save_btn = customtkinter.CTkButton(
+            self, text="", image=self.alarm_icon, width=60
+        )
+        self.alarm_save_btn.grid(row=0, column=2, sticky="nsew", padx=10, pady=10)
+
+        self.timer = customtkinter.CTkLabel(
+            self,
+            text="00:00:00",
+            font=("Century Gothic", 48, "bold"),
+            width=300,
+            height=100,
+            fg_color=("gray70", "gray30"),
+            corner_radius=10,
+        )
+        self.timer.grid(row=1, column=0, columnspan=3, sticky="ew", padx=10, pady=0)
+        self.timer_start_icon = customtkinter.CTkImage(
+            Image.open(app_path + "/Icons/start_90.png"), size=(26, 26)
+        )
+        self.timer_start_btn = customtkinter.CTkButton(
+            self,
+            text="",
+            image=self.timer_start_icon,
+            font=master.master.master.app_font,
+            width=60,
+            command=self.run_timer,
+        )
+        self.timer_start_btn.grid(row=2, column=0, sticky="nsew", padx=10, pady=10)
+        self.timer_pause_icon = customtkinter.CTkImage(
+            Image.open(app_path + "/Icons/pause_90.png"), size=(26, 26)
+        )
+        self.timer_stop_btn = customtkinter.CTkButton(
+            self,
+            text="",
+            image=self.timer_pause_icon,
+            font=master.master.master.app_font,
+            width=60,
+            command=self.stop_timer,
+        )
+        self.timer_stop_btn.grid(row=2, column=1, sticky="nsew", padx=10, pady=10)
+        self.timer_reset_icon = customtkinter.CTkImage(
+            Image.open(app_path + "/Icons/reset_100.png"), size=(26, 26)
+        )
+        self.timer_reset_btn = customtkinter.CTkButton(
+            self,
+            text="",
+            image=self.timer_reset_icon,
+            font=master.master.master.app_font,
+            width=60,
+            command=self.reset_timer,
+        )
+        self.timer_reset_btn.grid(row=2, column=2, sticky="nsew", padx=10, pady=10)
+
+        self.alert_msg = Notification(
+            app_id="Memoboard",
+            title="Alarm",
+            msg="Time is up!",
+            duration="long",
+            icon=app_path + "/Icons/memory_64.png",
+        )
+        self.alert_msg.set_audio(audio.Reminder, loop=False)
+
+    def run_timer(self):
+        self.timer_start_btn.configure(state="disabled", fg_color=("gray40", "gray60"))
+        self.countdown_btn.configure(state="disabled", fg_color=("gray40", "gray60"))
+        seconds = self.timer_time % 60
+        minutes = int((self.timer_time / 60) % 60)
+        hours = int((self.timer_time / 3600) % 24)
+        current_time = f"{hours:02}:{minutes:02}:{seconds:02}"
+        self.timer.configure(text=current_time)
+        if current_time == "00:00:00" and self.countdown_set is True:
+            self.alert_msg.show()
+            self.reset_timer()
+            return
+        if self.countdown_set is True:
+            self.timer_time -= 1
+        else:
+            self.timer_time += 1
+        self.timer_time_id = self.after(1000, self.run_timer)
+
+    def stop_timer(self):
+        if self.timer_time_id != "":
+            self.after_cancel(self.timer_time_id)
+        if self.countdown_set is True:
+            self.countdown_btn.configure(
+                state="normal", fg_color=("#2CC985", "#2FA572")
+            )
+        else:
+            self.timer_start_btn.configure(
+                state="normal", fg_color=("#2CC985", "#2FA572")
+            )
+
+    def reset_timer(self):
+        self.timer_time = 0
+        self.timer.configure(text="00:00:00")
+        self.countdown_set = False
+        self.timer_start_btn.configure(state="normal", fg_color=("#2CC985", "#2FA572"))
+        self.countdown_btn.configure(state="normal", fg_color=("#2CC985", "#2FA572"))
+        self.stop_timer()
+
+    def set_countdown(self):
+        time_str = self.countdown.get()
+        valid_time = re.match("[0-2][0-3]:[0-5][0-9]:[0-5][0-9]", time_str)
+        if time_str == "":
+            self.master.master.master.input_clue.configure(
+                text="Please enter a valid time.", fg_color=("white", "gray30")
+            )
+        elif valid_time is None:
+            self.master.master.master.input_clue.configure(
+                text="Please enter a valid time in the format: HH:MM:SS\nAllowed entry: 00:00:00 - 23:59:59",
+                fg_color=("white", "gray30"),
+            )
+        else:
+            self.master.master.master.input_clue.configure(
+                text="", fg_color="transparent"
+            )
+            time_list = time_str.split(":")
+            int_time_list = [int(x) for x in time_list]
+            time_in_seconds = (
+                int_time_list[0] * 3600 + int_time_list[1] * 60 + int_time_list[2]
+            )
+            if self.countdown_set is False:
+                self.timer_time = time_in_seconds
+            self.countdown_set = True
+            self.run_timer()
+
+
 class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
@@ -341,22 +489,9 @@ class App(customtkinter.CTk):
         # Main window properties and layout settings
         self.title("Memoboard")
         self.geometry("780x620")
-        self.iconbitmap("./Icons/memory_64.ico")
+        self.iconbitmap("./Icons/memory_32.ico")
         self.app_font = customtkinter.CTkFont("Century Gothic", 15, "bold")
-        self.alert_msg = Notification(
-            app_id="Memoboard",
-            title="Alarm",
-            msg="Time is up",
-            duration="long",
-            icon=app_path + "/Icons/memory_64.png",
-        )
-        self.alert_msg.set_audio(audio.Reminder, loop=False)
         self.current_date = date.today()
-        self.timer_time = 0
-        self.timer_time_id = ""
-        self.countdown_set = False
-        # self.tmr_date = date(2023, 9, 5)
-
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
         self.f_width = self.winfo_width() / 2
@@ -373,75 +508,19 @@ class App(customtkinter.CTk):
         self.tab_view.tab("Tasks").grid_columnconfigure((0, 1), weight=1)
         self.tab_view.tab("Tasks").grid_rowconfigure(1, weight=1)
 
-        self.countdown_icon = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/hourglass_96.png"), size=(26, 26)
-        )
-        self.alarm_icon = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/alarm_100.png"), size=(26, 26)
-        )
-        self.countdown = customtkinter.CTkEntry(
-            self.tab_view.tab("Timer"), placeholder_text="00:00:00", width=62
-        )
-        self.countdown.place(relx=0.5, rely=0.1, anchor=tkinter.CENTER)
-        self.countdown_btn = customtkinter.CTkButton(
+        self.input_clue = customtkinter.CTkLabel(
             self.tab_view.tab("Timer"),
             text="",
-            image=self.countdown_icon,
-            width=60,
-            command=self.set_countdown,
-        )
-        self.countdown_btn.place(relx=0.4, rely=0.1, anchor=tkinter.CENTER)
-        self.alarm_save_btn = customtkinter.CTkButton(
-            self.tab_view.tab("Timer"), text="", image=self.alarm_icon, width=60
-        )
-        self.alarm_save_btn.place(relx=0.6, rely=0.1, anchor=tkinter.CENTER)
-
-        self.timer = customtkinter.CTkLabel(
-            self.tab_view.tab("Timer"),
-            text="00:00:00",
-            font=("Century Gothic", 48, "bold"),
-            width=300,
-            height=100,
-            fg_color=("gray70", "gray30"),
+            font=("Century Gothic", 15, "bold"),
+            text_color=("black", "white"),
+            fg_color="transparent",
             corner_radius=10,
+            pady=5,
         )
-        self.timer.place(relx=0.5, rely=0.25, anchor=tkinter.CENTER)
-        self.timer_start_icon = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/start_90.png"), size=(26, 26)
-        )
-        self.timer_pause_icon = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/pause_90.png"), size=(26, 26)
-        )
-        self.timer_reset_icon = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/reset_100.png"), size=(26, 26)
-        )
-        self.timer_start_btn = customtkinter.CTkButton(
-            self.tab_view.tab("Timer"),
-            text="",
-            image=self.timer_start_icon,
-            font=self.app_font,
-            width=60,
-            command=self.run_timer,
-        )
-        self.timer_start_btn.place(relx=0.4, rely=0.4, anchor=tkinter.CENTER)
-        self.timer_stop_btn = customtkinter.CTkButton(
-            self.tab_view.tab("Timer"),
-            text="",
-            image=self.timer_pause_icon,
-            font=self.app_font,
-            width=60,
-            command=self.stop_timer,
-        )
-        self.timer_stop_btn.place(relx=0.5, rely=0.4, anchor=tkinter.CENTER)
-        self.timer_reset_btn = customtkinter.CTkButton(
-            self.tab_view.tab("Timer"),
-            text="",
-            image=self.timer_reset_icon,
-            font=self.app_font,
-            width=60,
-            command=self.reset_timer,
-        )
-        self.timer_reset_btn.place(relx=0.6, rely=0.4, anchor=tkinter.CENTER)
+        self.input_clue.grid(row=0, column=0, sticky="n", pady=20)
+        self.time_frame = TimeFrame(self.tab_view.tab("Timer"))
+        self.time_frame.grid(row=0, column=0, sticky="n", pady=70)
+        self.tab_view.tab("Timer").grid_columnconfigure(0, weight=1)
 
         self.tab_view.columnconfigure(0, weight=1)
 
@@ -510,25 +589,16 @@ class App(customtkinter.CTk):
         )
         # self.checkbox_frame2.grid_propagate(False)
 
-        # self.checkbox_frame1.configure(fg_color="transparent")
-        # self.checkbox_frame2.configure(fg_color="transparent")
-
         # Text field with button to add a new (optional) task
         self.new_task_frame = TaskInputFrame(self.tab_view.tab("Tasks"))
         self.new_task_frame.grid(
             row=2, column=0, padx=10, pady=10, sticky="nsew", columnspan=2
         )
 
-    # test method
-    # def set_tmr(self):
-    #     tm.sleep(5.0)
-    #     self.tmr_date = date(2023, 9, 6)
-
     def add_new_task(self):
         task, t_type = self.new_task_frame.get_new_task()
         if task == "NOTHING_CHOSEN":
             # Hint to choose an option
-            # self.set_tmr()
             print("Nothing chosen")
         elif task == "NO_TASK":
             # Hint to enter a new task
@@ -651,77 +721,10 @@ class App(customtkinter.CTk):
         set_time = self.navbar_frame.end_of_day_var.get() + ":00"
 
         if current_time == set_time:
-            # if current_time == "00:19:00":
             self.check_today_karma()
             TaskListFrame.end_of_day = True
         if self.current_date < today:
-            # if self.current_date < date(2023, 9, 7):
             self.reset_tasks(today)
-        # self.reset_tasks(date(2023, 9, 7))
-
-    def run_timer(self):
-        self.timer_start_btn.configure(state="disabled", fg_color=("gray40", "gray60"))
-        self.countdown_btn.configure(state="disabled", fg_color=("gray40", "gray60"))
-        print(self.timer_time)
-        seconds = self.timer_time % 60
-        minutes = int((self.timer_time / 60) % 60)
-        hours = int((self.timer_time / 3600) % 24)
-        print(hours, minutes, seconds)
-        print(self.countdown_set)
-        current_time = f"{hours:02}:{minutes:02}:{seconds:02}"
-        self.timer.configure(text=current_time)
-        if current_time == "00:00:00" and self.countdown_set is True:
-            self.alert_msg.show()
-            self.reset_timer()
-            return
-        if self.countdown_set is True:
-            self.timer_time -= 1
-        else:
-            self.timer_time += 1
-        self.timer_time_id = self.after(1000, self.run_timer)
-
-    def stop_timer(self):
-        self.after_cancel(self.timer_time_id)
-        if self.countdown_set is True:
-            # self.timer_start_btn.configure(state="disabled")
-            self.countdown_btn.configure(
-                state="normal", fg_color=("#2CC985", "#2FA572")
-            )
-        else:
-            self.timer_start_btn.configure(
-                state="normal", fg_color=("#2CC985", "#2FA572")
-            )
-            # self.countdown_btn.configure(state="disabled")
-        # self.countdown_set = False
-
-    def reset_timer(self):
-        self.timer_time = 0
-        self.timer.configure(text="00:00:00")
-        self.countdown_set = False
-        self.timer_start_btn.configure(state="normal", fg_color=("#2CC985", "#2FA572"))
-        self.countdown_btn.configure(state="normal", fg_color=("#2CC985", "#2FA572"))
-        self.stop_timer()
-
-    def set_countdown(self):
-        time_str = self.countdown.get()
-        time_list = time_str.split(":")
-        int_time_list = [int(x) for x in time_list]
-        print(int_time_list)
-        time_in_seconds = (
-            int_time_list[0] * 3600 + int_time_list[1] * 60 + int_time_list[2]
-        )
-        print(time_in_seconds)
-        if self.countdown_set is False:
-            self.timer_time = time_in_seconds
-        self.countdown_set = True
-        # self.countdown_btn.configure(state="disabled")
-        self.run_timer()
-        # seconds = self.timer_time % 60
-        # minutes = int((self.timer_time / 60) % 60)
-        # hours = int((self.timer_time / 3600) % 24)
-        # self.timer.configure(text=f"{hours:02}:{minutes:02}:{seconds:02}")
-        # self.timer_time -= 1
-        # self.timer_time_id = self.after(1000, self.run_timer)
 
     def auto_save(self):
         self.save_data()
@@ -734,7 +737,6 @@ class App(customtkinter.CTk):
             if task.checkbox.get() == 1:
                 task.checkbox.toggle()
         list_opt_done = []
-        # print(self.checkbox_frame2.tasks)
         for key, task in self.checkbox_frame2.tasks.items():
             task.checkbox.configure(state="normal")
             if task.checkbox.get() == 1:
@@ -742,13 +744,10 @@ class App(customtkinter.CTk):
                 task.destroy()
         for key in list_opt_done:
             self.checkbox_frame2.tasks.pop(key)
-        # print(self.checkbox_frame2.tasks)
         self.navbar_frame.karma_counter = 0
         self.navbar_frame.update_karma(0)
         self.current_date = today
         TaskListFrame.end_of_day = False
-
-        # new_task.checkbox.configure(state="disabled")
 
     def check_today_karma(self):
         def count_unchecked_tasks(task_list):
@@ -768,15 +767,6 @@ class App(customtkinter.CTk):
         )
 
         self.notify_about_karma("END")
-        # karma_alert_msg = Notification(
-        #     app_id="Memoboard",
-        #     title="Feierabend",
-        #     msg=self.navbar_frame.karma_message,
-        #     duration="long",
-        #     icon=self.navbar_frame.icon_path,
-        # )
-        # karma_alert_msg.set_audio(audio.Reminder, loop=False)
-        # karma_alert_msg.show()
 
     def notify_about_karma(self, timing):
         if timing == "END":
