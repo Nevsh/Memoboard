@@ -5,7 +5,7 @@ import uuid
 import json
 import time as tm
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from winotify import Notification, audio
 from PIL import Image
 
@@ -357,7 +357,7 @@ class TimeFrame(customtkinter.CTkFrame):
             Image.open(app_path + "/Icons/alarm_100.png"), size=(26, 26)
         )
         self.alarm_save_btn = customtkinter.CTkButton(
-            self, text="", image=self.alarm_icon, width=60
+            self, text="", image=self.alarm_icon, width=60, command=self.set_alarm
         )
         self.alarm_save_btn.grid(row=0, column=2, sticky="nsew", padx=10, pady=10)
 
@@ -448,6 +448,7 @@ class TimeFrame(customtkinter.CTkFrame):
             )
 
     def reset_timer(self):
+        self.master.master.master.input_clue.configure(text="", fg_color="transparent")
         self.timer_time = 0
         self.timer.configure(text="00:00:00")
         self.countdown_set = False
@@ -464,7 +465,7 @@ class TimeFrame(customtkinter.CTkFrame):
             )
         elif valid_time is None:
             self.master.master.master.input_clue.configure(
-                text="Please enter a valid time in the format: HH:MM:SS\nAllowed entry: 00:00:00 - 23:59:59",
+                text="Valid format: HH:MM:SS\nAllowed entry: 00:00:00 - 23:59:59",
                 fg_color=("white", "gray30"),
             )
         else:
@@ -481,6 +482,137 @@ class TimeFrame(customtkinter.CTkFrame):
             self.countdown_set = True
             self.run_timer()
 
+    # def check_input(self):
+    #     return re.match("[0-2][0-3]:[0-5][0-9]:[0-5][0-9]", self.countdown.get())
+
+    # def input_valid(self):
+    #     if self.countdown.get() == "":
+    #         self.master.master.master.input_clue.configure(
+    #             text="Please enter a valid time.", fg_color=("white", "gray30")
+    #         )
+    #     elif self.check_input() is None:
+    #         self.master.master.master.input_clue.configure(
+    #             text="Please enter a valid time in the format: HH:MM:SS\nAllowed entry: 00:00:00 - 23:59:59",
+    #             fg_color=("white", "gray30"),
+    #         )
+    def set_alarm(self):
+        time_str = self.countdown.get()
+        valid_time = re.match("[0-2][0-3]:[0-5][0-9]:[0-5][0-9]", time_str)
+        print(valid_time)
+        if time_str == "":
+            self.master.master.master.input_clue.configure(
+                text="Please enter a valid time.", fg_color=("white", "gray30")
+            )
+            print("nope1")
+        elif valid_time is None:
+            self.master.master.master.input_clue.configure(
+                text="Valid format: HH:MM:SS\nAllowed entry: 00:00:00 - 23:59:59",
+                fg_color=("white", "gray30"),
+            )
+            print("nope2")
+        else:
+            self.master.master.master.input_clue.configure(
+                text="", fg_color="transparent"
+            )
+            self.master.master.master.alarm_list.add_new_alarm_to_frame(time_str)
+
+
+class AlarmListFrame(customtkinter.CTkScrollableFrame):
+    def __init__(self, master):
+        super().__init__(
+            master,
+            width=298,
+            height=380,
+            label_text="Alarms",
+            label_font=master.master.master.app_font,
+            label_fg_color=("gray70", "gray35"),
+        )
+        self.grid_columnconfigure(0, weight=1)
+        self.row_count = 0
+        self.alarms = {}
+
+    def add_new_alarm_to_frame(self, alarm_time):
+        print(self.alarms)
+        alarm_id = str(uuid.uuid4())
+        new_alarm = AlarmFrame(
+            self, alarm_id=alarm_id, alarm_time=alarm_time, alarm_mode="off"
+        )
+        new_alarm.grid(row=self.row_count, column=0, padx=10, pady=(10, 0), sticky="ew")
+        self.alarms[alarm_id] = new_alarm
+        self.row_count += 1
+
+    def load_alarm_to_frame(self):
+        pass
+
+
+class AlarmFrame(customtkinter.CTkFrame):
+    def __init__(self, master, alarm_id, alarm_time, alarm_mode):
+        super().__init__(
+            master,
+        )
+        self.grid_columnconfigure(0, weight=1)
+        self.alarm_id = alarm_id
+        self.alarm_time = alarm_time
+        self.alarm_mode = alarm_mode
+
+        alarm_mode_var = customtkinter.StringVar(value=self.alarm_mode)
+        self.alarm_mode = customtkinter.CTkSwitch(
+            self,
+            text="",
+            variable=alarm_mode_var,
+            onvalue="on",
+            offvalue="off",
+            command=self.alarm,
+        )
+        self.alarm_mode.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        self.alarm_time_label = customtkinter.CTkLabel(
+            self,
+            text=self.alarm_time,
+            font=self.master.master.master.master.master.master.app_font,
+        )
+        self.alarm_time_label.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
+        self.delete_icon = customtkinter.CTkImage(
+            Image.open(app_path + "/Icons/delete_96.png"), size=(25, 25)
+        )
+        self.alarm_del_button = customtkinter.CTkButton(
+            self,
+            text="",
+            command=self.del_alarm,
+            width=10,
+            image=self.delete_icon,
+            fg_color="transparent",
+            hover_color=("gray82", "gray40"),
+        )
+        self.alarm_del_button.grid(row=0, column=2, padx=(46, 10), pady=10, sticky="e")
+
+        self.alarm_msg = Notification(
+            app_id="Memoboard",
+            title="Alarm",
+            msg="Time is up!\nIt's " + self.alarm_time,
+            duration="long",
+            icon=app_path + "/Icons/memory_64.png",
+        )
+        self.alarm_msg.set_audio(audio.Reminder, loop=False)
+
+    def del_alarm(self):
+        self.master.alarms.pop(self.alarm_id)
+        self.destroy()
+
+    def alarm(self):
+        real_time = self.master.master.master.master.master.master.current_time
+        real_time_str = str(real_time.time().replace(microsecond=0))
+        real_time_delay = (
+            self.master.master.master.master.master.master.current_time
+            + timedelta(seconds=1)
+        )
+        real_time_delay_str = str(real_time_delay.time().replace(microsecond=0))
+        print(self.alarm_time, real_time_str, real_time_delay_str)
+        if self.alarm_time in (real_time_str, real_time_delay_str):
+            self.alarm_msg.show()
+            self.alarm_mode.deselect()
+        if self.alarm_mode.get() == "on":
+            self.after(1000, self.alarm)
+
 
 class App(customtkinter.CTk):
     def __init__(self):
@@ -492,6 +624,7 @@ class App(customtkinter.CTk):
         self.iconbitmap("./Icons/memory_32.ico")
         self.app_font = customtkinter.CTkFont("Century Gothic", 15, "bold")
         self.current_date = date.today()
+        self.current_time = ""
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
         self.f_width = self.winfo_width() / 2
@@ -519,8 +652,10 @@ class App(customtkinter.CTk):
         )
         self.input_clue.grid(row=0, column=0, sticky="n", pady=20)
         self.time_frame = TimeFrame(self.tab_view.tab("Timer"))
-        self.time_frame.grid(row=0, column=0, sticky="n", pady=70)
-        self.tab_view.tab("Timer").grid_columnconfigure(0, weight=1)
+        self.time_frame.grid(row=0, column=0, sticky="n", pady=(70, 10))
+        self.alarm_list = AlarmListFrame(self.tab_view.tab("Timer"))
+        self.alarm_list.grid(row=0, column=1, sticky="n", padx=0, pady=(70, 10))
+        self.tab_view.tab("Timer").grid_columnconfigure((0, 1), weight=1)
 
         self.tab_view.columnconfigure(0, weight=1)
 
@@ -715,12 +850,15 @@ class App(customtkinter.CTk):
         self.navbar_frame.update_karma(0)
 
     def clock(self):
-        current_time = datetime.now().strftime("%H:%M:%S")
+        self.current_time = datetime.now()
+        current_time_str = datetime.now().strftime("%H:%M:%S")
+        # print("Zeit:", type(datetime.now().time()))
+        # print(self.current_time, datetime.now().strftime("%f"))
         today = date.today()
         self.after(1000, self.clock)
         set_time = self.navbar_frame.end_of_day_var.get() + ":00"
 
-        if current_time == set_time:
+        if current_time_str == set_time:
             self.check_today_karma()
             TaskListFrame.end_of_day = True
         if self.current_date < today:
