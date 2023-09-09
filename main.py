@@ -3,9 +3,11 @@ import tkinter
 import os
 import uuid
 import json
-import time as tm
+
+# import time as tm
 import re
-from datetime import date, datetime, timedelta
+import random
+from datetime import date, datetime, timedelta, time
 from winotify import Notification, audio
 from PIL import Image
 
@@ -458,7 +460,7 @@ class TimeFrame(customtkinter.CTkFrame):
 
     def set_countdown(self):
         time_str = self.countdown.get()
-        valid_time = re.match("[0-2][0-3]:[0-5][0-9]:[0-5][0-9]", time_str)
+        valid_time = re.match("([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]", time_str)
         if time_str == "":
             self.master.master.master.input_clue.configure(
                 text="Please enter a valid time.", fg_color=("white", "gray30")
@@ -497,7 +499,7 @@ class TimeFrame(customtkinter.CTkFrame):
     #         )
     def set_alarm(self):
         time_str = self.countdown.get()
-        valid_time = re.match("[0-2][0-3]:[0-5][0-9]:[0-5][0-9]", time_str)
+        valid_time = re.match("([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]", time_str)
         print(valid_time)
         if time_str == "":
             self.master.master.master.input_clue.configure(
@@ -518,7 +520,7 @@ class TimeFrame(customtkinter.CTkFrame):
 
 
 class AlarmListFrame(customtkinter.CTkScrollableFrame):
-    def __init__(self, master):
+    def __init__(self, master, alarm_type):
         super().__init__(
             master,
             width=298,
@@ -528,6 +530,7 @@ class AlarmListFrame(customtkinter.CTkScrollableFrame):
             label_fg_color=("gray70", "gray35"),
         )
         self.grid_columnconfigure(0, weight=1)
+        self.alarm_type = alarm_type
         self.row_count = 0
         self.alarms = {}
 
@@ -535,7 +538,13 @@ class AlarmListFrame(customtkinter.CTkScrollableFrame):
         print(self.alarms)
         alarm_id = str(uuid.uuid4())
         new_alarm = AlarmFrame(
-            self, alarm_id=alarm_id, alarm_time=alarm_time, alarm_mode="off"
+            self,
+            alarm_id=alarm_id,
+            alarm_time=alarm_time,
+            alarm_mode="off",
+            alarm_type=self.alarm_type,
+            rem_msg="",
+            rem_on=False,
         )
         new_alarm.grid(row=self.row_count, column=0, padx=10, pady=(10, 0), sticky="ew")
         self.alarms[alarm_id] = new_alarm
@@ -546,16 +555,21 @@ class AlarmListFrame(customtkinter.CTkScrollableFrame):
 
 
 class AlarmFrame(customtkinter.CTkFrame):
-    def __init__(self, master, alarm_id, alarm_time, alarm_mode):
+    def __init__(
+        self, master, alarm_id, alarm_time, alarm_mode, alarm_type, rem_msg, rem_on
+    ):
         super().__init__(
             master,
         )
         self.grid_columnconfigure(0, weight=1)
         self.alarm_id = alarm_id
         self.alarm_time = alarm_time
-        self.alarm_mode = alarm_mode
+        self.alarm_type = alarm_type
+        self.rem_msg = rem_msg
+        self.rem_on = rem_on
+        # self.alarm_mode = alarm_mode
 
-        alarm_mode_var = customtkinter.StringVar(value=self.alarm_mode)
+        alarm_mode_var = customtkinter.StringVar(value=alarm_mode)
         self.alarm_mode = customtkinter.CTkSwitch(
             self,
             text="",
@@ -566,9 +580,7 @@ class AlarmFrame(customtkinter.CTkFrame):
         )
         self.alarm_mode.grid(row=0, column=0, padx=10, pady=10, sticky="w")
         self.alarm_time_label = customtkinter.CTkLabel(
-            self,
-            text=self.alarm_time,
-            font=self.master.master.master.master.master.master.app_font,
+            self, text=self.alarm_time, font=("Century Gothic", 15, "bold")
         )
         self.alarm_time_label.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
         self.delete_icon = customtkinter.CTkImage(
@@ -593,25 +605,168 @@ class AlarmFrame(customtkinter.CTkFrame):
             icon=app_path + "/Icons/memory_64.png",
         )
         self.alarm_msg.set_audio(audio.Reminder, loop=False)
+        self.reminder_msg = Notification(
+            app_id="Memoboard",
+            title="Exercise Time!",
+            msg=self.rem_msg,
+            duration="long",
+            icon=app_path + "/Icons/memory_64.png",
+        )
+        self.reminder_msg.set_audio(audio.Reminder, loop=False)
 
     def del_alarm(self):
         self.master.alarms.pop(self.alarm_id)
         self.destroy()
 
     def alarm(self):
-        real_time = self.master.master.master.master.master.master.current_time
+        # real_time = self.master.master.master.master.master.master.current_time
+        real_time = None
+        # if self.alarm_type == "REMINDER":
+        if self.rem_on is True:
+            real_time = self.master.master.master.master.current_time
+        else:
+            real_time = self.master.master.master.master.master.master.current_time
         real_time_str = str(real_time.time().replace(microsecond=0))
-        real_time_delay = (
-            self.master.master.master.master.master.master.current_time
-            + timedelta(seconds=1)
-        )
+        real_time_delay = real_time + timedelta(seconds=1)
         real_time_delay_str = str(real_time_delay.time().replace(microsecond=0))
         print(self.alarm_time, real_time_str, real_time_delay_str)
         if self.alarm_time in (real_time_str, real_time_delay_str):
-            self.alarm_msg.show()
-            self.alarm_mode.deselect()
+            if self.rem_on is True:
+                self.master.master.master.master.exercise_frame.ex_label.configure(
+                    text=self.rem_msg, fg_color=("gray90", "gray27")
+                )
+                self.master.master.master.master.exercise_frame.reminder = False
+                self.master.master.master.master.exercise_frame.reminder_switch.deselect()
+                self.reminder_msg.show()
+                self.alarm_mode.deselect()
+                self.destroy()
+            else:
+                self.alarm_msg.show()
+                self.alarm_mode.deselect()
+            # if self.alarm_type == "REMINDER":
+            #     # self.master.master.master.master.master.master.exercise_frame.get_random_exercise()
+            #     print("zerstört")
+            #     self.destroy()
         if self.alarm_mode.get() == "on":
             self.after(1000, self.alarm)
+
+
+class ExerciseFrame(customtkinter.CTkFrame):
+    def __init__(self, master, font):
+        super().__init__(master)
+        self.master = master
+        self.exercise = None
+        self.reminder = False
+        self.reminder_alarm = None
+        self.chosen_time = "none"
+        self.exercises = [
+            [[2, 5, 10], "min", "meditation"],
+            [[10, 20, 30], "", "push ups"],
+            [[5, 10, 15], "", "pull ups"],
+            [[30, 60, 90], "sec", "Mabu"],
+        ]
+
+        self.ex_label = customtkinter.CTkLabel(
+            self,
+            text="Random Exercise",
+            fg_color=("gray70", "gray35"),
+            width=300,
+            corner_radius=6,
+            font=font,
+        )
+        self.ex_label.grid(
+            row=0, column=0, padx=10, pady=(10, 0), sticky="ew", columnspan=2
+        )
+
+        self.reminder_switch_var = customtkinter.StringVar(value="off")
+        self.reminder_switch = customtkinter.CTkSwitch(
+            self,
+            text="Reminder",
+            font=("Century Gothic", 15, "bold"),
+            onvalue="on",
+            offvalue="off",
+            variable=self.reminder_switch_var,
+            command=self.set_reminder,
+        )
+        self.reminder_switch.grid(row=1, column=0, padx=10, pady=(10, 0), sticky="w")
+
+        self.reminder_menu_var = customtkinter.StringVar(value="none")
+        self.reminder_menu = customtkinter.CTkOptionMenu(
+            self,
+            values=["none", "15 min", "30 min", "60 min", "90 min", "120 min"],
+            variable=self.reminder_menu_var,
+            dynamic_resizing=True,
+            width=100,
+            # command=self.set_reminder,
+            font=("Century Gothic", 15),
+        )
+        self.reminder_menu.grid(row=1, column=0, padx=10, pady=(10, 0), sticky="e")
+
+        self.ex_button = customtkinter.CTkButton(
+            self, text="Generate Exercise", command=self.get_random_exercise, font=font
+        )
+        self.ex_button.grid(
+            row=3, column=0, padx=10, pady=10, sticky="sew", columnspan=2
+        )
+
+        self.ex_label = customtkinter.CTkLabel(
+            self, text="", fg_color=("gray90", "gray27")
+        )
+        self.ex_label.grid(
+            row=2, column=0, padx=10, pady=(10, 0), sticky="nsew", columnspan=2
+        )
+
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(2, weight=1)
+
+    def get_random_exercise(self):
+        exercise_list = self.exercises[random.randint(0, len(self.exercises) - 1)]
+        amount = str(exercise_list[0][random.randint(0, len(exercise_list[0]) - 1)])
+        unit = exercise_list[1]
+        exercise_name = exercise_list[2]
+        self.exercise = f"{amount} {unit} {exercise_name}"
+
+        if self.reminder is False:
+            self.ex_label.configure(text=self.exercise, fg_color=("gray90", "gray27"))
+        else:
+            pass
+
+    def set_reminder(self):
+        if self.reminder_switch_var.get() == "on":
+            self.chosen_time = self.reminder_menu_var.get()
+            print("Menüwahl:", self.reminder_menu_var.get())
+            if self.chosen_time == "none":
+                print("nichts passiert")
+            else:
+                self.reminder = True
+                self.get_random_exercise()
+                chosen_time_str = self.chosen_time.split()[0]
+                print(
+                    "reminder in " + chosen_time_str,
+                    type(chosen_time_str),
+                    int(chosen_time_str),
+                    type(int(chosen_time_str)),
+                )
+                print(self.master.master.master.current_time)
+                current_time = self.master.master.master.current_time
+                reminder_time = current_time + timedelta(minutes=int(chosen_time_str))
+                reminder_time_str = str(reminder_time.time().replace(microsecond=0))
+                print(reminder_time_str)
+                self.reminder_alarm = AlarmFrame(
+                    self,
+                    alarm_id=0,
+                    alarm_time=reminder_time_str,
+                    alarm_mode="off",
+                    alarm_type="REMINDER",
+                    rem_msg=self.exercise,
+                    rem_on=True,
+                )
+                # In variable Speichern und bei off wird gespeichertes Alarmframe destroyed
+                self.reminder_alarm.alarm_mode.toggle()
+        else:
+            if self.chosen_time != "none":
+                print("off destroyed")
+                self.reminder_alarm.destroy()
 
 
 class App(customtkinter.CTk):
@@ -624,7 +779,8 @@ class App(customtkinter.CTk):
         self.iconbitmap("./Icons/memory_32.ico")
         self.app_font = customtkinter.CTkFont("Century Gothic", 15, "bold")
         self.current_date = date.today()
-        self.current_time = ""
+        self.current_time = datetime.now()
+        self.day_check = False
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
         self.f_width = self.winfo_width() / 2
@@ -653,9 +809,14 @@ class App(customtkinter.CTk):
         self.input_clue.grid(row=0, column=0, sticky="n", pady=20)
         self.time_frame = TimeFrame(self.tab_view.tab("Timer"))
         self.time_frame.grid(row=0, column=0, sticky="n", pady=(70, 10))
-        self.alarm_list = AlarmListFrame(self.tab_view.tab("Timer"))
-        self.alarm_list.grid(row=0, column=1, sticky="n", padx=0, pady=(70, 10))
+        self.alarm_list = AlarmListFrame(self.tab_view.tab("Timer"), alarm_type="ALARM")
+        self.alarm_list.grid(
+            row=0, column=1, sticky="n", padx=0, pady=(70, 10), rowspan=2
+        )
         self.tab_view.tab("Timer").grid_columnconfigure((0, 1), weight=1)
+
+        self.exercise_frame = ExerciseFrame(self.tab_view.tab("Timer"), self.app_font)
+        self.exercise_frame.grid(row=1, column=0, sticky="ns", pady=(0, 10))
 
         self.tab_view.columnconfigure(0, weight=1)
 
@@ -857,14 +1018,29 @@ class App(customtkinter.CTk):
         today = date.today()
         self.after(1000, self.clock)
         set_time = self.navbar_frame.end_of_day_var.get() + ":00"
-
-        if current_time_str == set_time:
+        hour, min, sec = int(set_time[:2]), int(set_time[3:5]), 0
+        c_hour, c_min, c_sec = (
+            int(current_time_str[:2]),
+            int(current_time_str[3:5]),
+            int(current_time_str[6:8]),
+        )
+        c_time = time(c_hour, c_min, c_sec)
+        set_endtime = time(hour, min, sec)
+        end_day = time(hour=23, minute=59, second=59)
+        test1 = time(22, 0, 0)
+        test2 = time(23, 0, 0)
+        if set_endtime <= c_time <= end_day and self.day_check == False:
+            # if test1 <= test2 <= end_day and self.day_check == False:
+            print("disable tasks")
+            self.day_check = True  # Speichern in json
+            # if current_time_str == set_time:
             self.check_today_karma()
             TaskListFrame.end_of_day = True
         if self.current_date < today:
             self.reset_tasks(today)
 
     def auto_save(self):
+        print("AUTOSAVE")
         self.save_data()
         self.after(10000, self.auto_save)
 
