@@ -1,10 +1,7 @@
 import customtkinter
-import tkinter
 import os
 import uuid
 import json
-
-# import time as tm
 import re
 import random
 from datetime import date, datetime, timedelta, time
@@ -87,17 +84,6 @@ class NavbarFrame(customtkinter.CTkFrame):
         self.save_icon = customtkinter.CTkImage(
             Image.open(app_path + "/Icons/save_96.png"), size=(28, 28)
         )
-        # self.save_button = customtkinter.CTkButton(
-        #     self,
-        #     text="",
-        #     width=10,
-        #     command=master.save_data,
-        #     image=self.save_icon,
-        #     fg_color=("gray76", "gray54"),
-        #     hover_color=("gray88", "gray64"),
-        #     border_spacing=0,
-        # )
-        # self.save_button.grid(row=0, column=3, padx=10, pady=10, sticky="e")
 
         self.end_of_day_icon = customtkinter.CTkImage(
             Image.open(app_path + "/Icons/dusk_96.png"), size=(30, 30)
@@ -194,7 +180,7 @@ class TaskInputFrame(customtkinter.CTkFrame):
 
         self.radio2 = customtkinter.CTkRadioButton(
             self,
-            text="Optional",
+            text="To-Do",
             variable=self.radio_var,
             value="optional",
             font=master.master.master.app_font,
@@ -202,7 +188,7 @@ class TaskInputFrame(customtkinter.CTkFrame):
         self.radio2.grid(row=0, column=1, padx=0, pady=(10, 0), sticky="w")
 
         self.task_entry = customtkinter.CTkEntry(
-            self, placeholder_text="New (optional) task", font=("Century Gothic", 13)
+            self, placeholder_text="New task", font=("Century Gothic", 13)
         )
         self.task_entry.grid(
             row=1, column=0, padx=10, pady=(10, 10), sticky="ew", columnspan=2
@@ -210,7 +196,7 @@ class TaskInputFrame(customtkinter.CTkFrame):
 
         self.button = customtkinter.CTkButton(
             self,
-            text="Add task",
+            text="Add Task",
             command=master.master.master.add_new_task,
             font=master.master.master.app_font,
         )
@@ -244,15 +230,6 @@ class TaskListFrame(customtkinter.CTkScrollableFrame):
         self.row_count = 1
         self.task_list_frame_karma = 0
         self.tasks = {}
-
-        # self.title = customtkinter.CTkLabel(
-        #     self,
-        #     text=self.title,
-        #     fg_color=("gray70", "gray35"),
-        #     corner_radius=6,
-        #     font=master.master.master.app_font,
-        # )
-        # self.title.grid(row=0, column=0, padx=0, pady=(0, 0), sticky="ew")
 
     def add_new_task_to_frame(self, task, t_type):
         task_id = str(uuid.uuid4())
@@ -484,19 +461,6 @@ class TimeFrame(customtkinter.CTkFrame):
             self.countdown_set = True
             self.run_timer()
 
-    # def check_input(self):
-    #     return re.match("[0-2][0-3]:[0-5][0-9]:[0-5][0-9]", self.countdown.get())
-
-    # def input_valid(self):
-    #     if self.countdown.get() == "":
-    #         self.master.master.master.input_clue.configure(
-    #             text="Please enter a valid time.", fg_color=("white", "gray30")
-    #         )
-    #     elif self.check_input() is None:
-    #         self.master.master.master.input_clue.configure(
-    #             text="Please enter a valid time in the format: HH:MM:SS\nAllowed entry: 00:00:00 - 23:59:59",
-    #             fg_color=("white", "gray30"),
-    #         )
     def set_alarm(self):
         time_str = self.countdown.get()
         valid_time = re.match("([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]", time_str)
@@ -573,10 +537,8 @@ class AlarmFrame(customtkinter.CTkFrame):
         self.grid_columnconfigure(0, weight=1)
         self.alarm_id = alarm_id
         self.alarm_time = alarm_time
-        # self.alarm_mode = alarm_mode
         self.rem_msg = rem_msg
         self.rem_on = rem_on
-        # self.alarm_mode = alarm_mode
 
         self.alarm_mode_switch_var = customtkinter.StringVar(value=alarm_mode)
         self.alarm_mode_switch = customtkinter.CTkSwitch(
@@ -628,9 +590,7 @@ class AlarmFrame(customtkinter.CTkFrame):
         self.destroy()
 
     def alarm(self):
-        # real_time = self.master.master.master.master.master.master.current_time
         real_time = None
-        # if self.alarm_type == "REMINDER":
         if self.rem_on is True:
             real_time = self.master.master.master.master.current_time
         else:
@@ -652,10 +612,6 @@ class AlarmFrame(customtkinter.CTkFrame):
             else:
                 self.alarm_msg.show()
                 self.alarm_mode_switch.deselect()
-            # if self.alarm_type == "REMINDER":
-            #     # self.master.master.master.master.master.master.exercise_frame.get_random_exercise()
-            #     print("zerstört")
-            #     self.destroy()
         if self.alarm_mode_switch.get() == "on":
             self.after(1000, self.alarm)
 
@@ -684,7 +640,7 @@ class ExerciseFrame(customtkinter.CTkFrame):
             font=font,
         )
         self.ex_label.grid(
-            row=0, column=0, padx=10, pady=(10, 0), sticky="ew", columnspan=2
+            row=0, column=0, padx=6, pady=(6, 0), sticky="ew", columnspan=2
         )
 
         self.reminder_switch_var = customtkinter.StringVar(value="off")
@@ -706,7 +662,6 @@ class ExerciseFrame(customtkinter.CTkFrame):
             variable=self.reminder_menu_var,
             dynamic_resizing=True,
             width=100,
-            # command=self.set_reminder,
             font=("Century Gothic", 15),
         )
         self.reminder_menu.grid(row=1, column=0, padx=10, pady=(10, 0), sticky="e")
@@ -783,7 +738,10 @@ class App(customtkinter.CTk):
 
         # Main window properties and layout settings
         self.title("Memoboard")
-        self.geometry("780x620")
+        self.window_width = 780
+        self.window_height = 620
+        self.minsize(self.window_width, self.window_height)
+        self.maxsize(self.window_width, self.window_height)
         self.iconbitmap("./Icons/memory_32.ico")
         self.app_font = customtkinter.CTkFont("Century Gothic", 15, "bold")
         self.current_date = date.today()
@@ -793,6 +751,13 @@ class App(customtkinter.CTk):
         self.grid_rowconfigure(1, weight=1)
         self.f_width = self.winfo_width() / 2
         self.f_height = self.winfo_height() / 2
+        self.screen_width = self.winfo_screenwidth()
+        self.screen_height = self.winfo_screenheight()
+        self.pos_y = int(self.screen_height / 2 - self.window_height / 2)
+        self.pos_x = int(self.screen_width / 2 - self.window_width / 2)
+        self.geometry(
+            f"{self.window_width}x{self.window_height}+{self.pos_x}+{self.pos_y}"
+        )
 
         self.navbar_frame = NavbarFrame(self)
         self.navbar_frame.grid(row=0, column=0, sticky="ew", columnspan=2)
@@ -876,7 +841,6 @@ class App(customtkinter.CTk):
             label_fg_color=("gray70", "gray35"),
         )
         self.checkbox_frame1.grid(row=1, column=0, padx=10, pady=(10, 0), sticky="nsew")
-        # self.checkbox_frame1.grid_propagate(False)
         self.checkbox_frame2 = TaskListFrame(
             self.tab_view.tab("Tasks"),
             "Optional",
@@ -884,14 +848,13 @@ class App(customtkinter.CTk):
             height=self.f_height,
         )
         self.checkbox_frame2.configure(
-            label_text="Optional",
+            label_text="To-Do",
             label_font=self.app_font,
             label_fg_color=("gray70", "gray35"),
         )
         self.checkbox_frame2.grid(
             row=1, column=1, padx=(0, 10), pady=(10, 0), sticky="nsew"
         )
-        # self.checkbox_frame2.grid_propagate(False)
 
         # Text field with button to add a new (optional) task
         self.new_task_frame = TaskInputFrame(self.tab_view.tab("Tasks"))
@@ -1059,13 +1022,10 @@ class App(customtkinter.CTk):
         c_time = time(c_hour, c_min, c_sec)
         set_endtime = time(hour, min, sec)
         end_day = time(hour=23, minute=59, second=59)
-        test1 = time(22, 0, 0)
-        test2 = time(23, 0, 0)
-        if set_endtime <= c_time <= end_day and self.day_check == False:
-            # if test1 <= test2 <= end_day and self.day_check == False:
+
+        if (set_endtime <= c_time <= end_day) and self.day_check == False:
             print("disable tasks")
-            self.day_check = True  # Speichern in json
-            # if current_time_str == set_time:
+            self.day_check = True
             self.check_today_karma()
             TaskListFrame.end_of_day = True
         if self.current_date < today:
