@@ -520,7 +520,7 @@ class TimeFrame(customtkinter.CTkFrame):
 
 
 class AlarmListFrame(customtkinter.CTkScrollableFrame):
-    def __init__(self, master, alarm_type):
+    def __init__(self, master):
         super().__init__(
             master,
             width=298,
@@ -530,7 +530,6 @@ class AlarmListFrame(customtkinter.CTkScrollableFrame):
             label_fg_color=("gray70", "gray35"),
         )
         self.grid_columnconfigure(0, weight=1)
-        self.alarm_type = alarm_type
         self.row_count = 0
         self.alarms = {}
 
@@ -542,7 +541,6 @@ class AlarmListFrame(customtkinter.CTkScrollableFrame):
             alarm_id=alarm_id,
             alarm_time=alarm_time,
             alarm_mode="off",
-            alarm_type=self.alarm_type,
             rem_msg="",
             rem_on=False,
         )
@@ -550,35 +548,46 @@ class AlarmListFrame(customtkinter.CTkScrollableFrame):
         self.alarms[alarm_id] = new_alarm
         self.row_count += 1
 
-    def load_alarm_to_frame(self):
-        pass
+    def load_alarm_to_frame(self, alarm_id, alarm_time, alarm_mode):
+        new_alarm = AlarmFrame(
+            self,
+            alarm_id=alarm_id,
+            alarm_time=alarm_time,
+            alarm_mode=alarm_mode,
+            rem_msg="",
+            rem_on=False,
+        )
+        new_alarm.grid(row=self.row_count, column=0, padx=10, pady=(10, 0), sticky="ew")
+        if alarm_mode == "on":
+            new_alarm.alarm_mode_switch.toggle()
+            new_alarm.alarm_mode_switch.toggle()
+        self.alarms[alarm_id] = new_alarm
+        self.row_count += 1
 
 
 class AlarmFrame(customtkinter.CTkFrame):
-    def __init__(
-        self, master, alarm_id, alarm_time, alarm_mode, alarm_type, rem_msg, rem_on
-    ):
+    def __init__(self, master, alarm_id, alarm_time, alarm_mode, rem_msg, rem_on):
         super().__init__(
             master,
         )
         self.grid_columnconfigure(0, weight=1)
         self.alarm_id = alarm_id
         self.alarm_time = alarm_time
-        self.alarm_type = alarm_type
+        # self.alarm_mode = alarm_mode
         self.rem_msg = rem_msg
         self.rem_on = rem_on
         # self.alarm_mode = alarm_mode
 
-        alarm_mode_var = customtkinter.StringVar(value=alarm_mode)
-        self.alarm_mode = customtkinter.CTkSwitch(
+        self.alarm_mode_switch_var = customtkinter.StringVar(value=alarm_mode)
+        self.alarm_mode_switch = customtkinter.CTkSwitch(
             self,
             text="",
-            variable=alarm_mode_var,
+            variable=self.alarm_mode_switch_var,
             onvalue="on",
             offvalue="off",
             command=self.alarm,
         )
-        self.alarm_mode.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        self.alarm_mode_switch.grid(row=0, column=0, padx=10, pady=10, sticky="w")
         self.alarm_time_label = customtkinter.CTkLabel(
             self, text=self.alarm_time, font=("Century Gothic", 15, "bold")
         )
@@ -638,16 +647,16 @@ class AlarmFrame(customtkinter.CTkFrame):
                 self.master.master.master.master.exercise_frame.reminder = False
                 self.master.master.master.master.exercise_frame.reminder_switch.deselect()
                 self.reminder_msg.show()
-                self.alarm_mode.deselect()
+                self.alarm_mode_switch.deselect()
                 self.destroy()
             else:
                 self.alarm_msg.show()
-                self.alarm_mode.deselect()
+                self.alarm_mode_switch.deselect()
             # if self.alarm_type == "REMINDER":
             #     # self.master.master.master.master.master.master.exercise_frame.get_random_exercise()
             #     print("zerstört")
             #     self.destroy()
-        if self.alarm_mode.get() == "on":
+        if self.alarm_mode_switch.get() == "on":
             self.after(1000, self.alarm)
 
 
@@ -757,12 +766,11 @@ class ExerciseFrame(customtkinter.CTkFrame):
                     alarm_id=0,
                     alarm_time=reminder_time_str,
                     alarm_mode="off",
-                    alarm_type="REMINDER",
                     rem_msg=self.exercise,
                     rem_on=True,
                 )
                 # In variable Speichern und bei off wird gespeichertes Alarmframe destroyed
-                self.reminder_alarm.alarm_mode.toggle()
+                self.reminder_alarm.alarm_mode_switch.toggle()
         else:
             if self.chosen_time != "none":
                 print("off destroyed")
@@ -809,7 +817,7 @@ class App(customtkinter.CTk):
         self.input_clue.grid(row=0, column=0, sticky="n", pady=20)
         self.time_frame = TimeFrame(self.tab_view.tab("Timer"))
         self.time_frame.grid(row=0, column=0, sticky="n", pady=(70, 10))
-        self.alarm_list = AlarmListFrame(self.tab_view.tab("Timer"), alarm_type="ALARM")
+        self.alarm_list = AlarmListFrame(self.tab_view.tab("Timer"))
         self.alarm_list.grid(
             row=0, column=1, sticky="n", padx=0, pady=(70, 10), rowspan=2
         )
@@ -923,6 +931,8 @@ class App(customtkinter.CTk):
     def save_data(self):
         tasks_daily = self.checkbox_frame1.tasks
         tasks_optional = self.checkbox_frame2.tasks
+        alarms = self.alarm_list.alarms
+        alarm_list = []
 
         karma_score = self.navbar_frame.karma_counter
         switch_mode = self.navbar_frame.mode_switch_var.get()
@@ -945,6 +955,16 @@ class App(customtkinter.CTk):
         create_task_dict(tasks_daily, tasks_daily_list)
         create_task_dict(tasks_optional, tasks_optional_list)
 
+        def create_alarm_dict(alarms, alarm_list):
+            for alarm in alarms.values():
+                alarm_dict = {}
+                alarm_dict["id"] = alarm.alarm_id
+                alarm_dict["time"] = alarm.alarm_time
+                alarm_dict["mode"] = alarm.alarm_mode_switch_var.get()
+                alarm_list.append(alarm_dict)
+
+        create_alarm_dict(alarms, alarm_list)
+
         data_dict = {}
         data_dict["karma"] = karma_score
         data_dict["mode"] = switch_mode
@@ -957,6 +977,8 @@ class App(customtkinter.CTk):
         data_dict["month"] = self.current_date.month
         data_dict["year"] = self.current_date.year
         data_dict["day_end_state"] = TaskListFrame.end_of_day
+        data_dict["alarm"] = alarm_list
+        data_dict["day_check"] = self.day_check
 
         data_dict_str = json.dumps(data_dict)
 
@@ -977,9 +999,9 @@ class App(customtkinter.CTk):
         if data_converted["mode"] == "on":
             self.navbar_frame.mode_switch.toggle()
 
-        def load_tasks(tasks_list):
-            for task in tasks_list:
-                if tasks_list[0]["type"] == "daily":
+        def load_tasks(task_list):
+            for task in task_list:
+                if task_list[0]["type"] == "daily":
                     self.checkbox_frame1.load_task_to_frame(
                         task["name"],
                         task["type"],
@@ -1007,6 +1029,16 @@ class App(customtkinter.CTk):
             data_converted["year"], data_converted["month"], data_converted["day"]
         )
         TaskListFrame.end_of_day = data_converted["day_end_state"]
+
+        def load_alarms(alarm_list):
+            for alarm in alarm_list:
+                self.alarm_list.load_alarm_to_frame(
+                    alarm["id"], alarm["time"], alarm["mode"]
+                )
+
+        load_alarms(data_converted["alarm"])
+        self.day_check = data_converted["day_check"]
+
         # update karma icon image according to karma score when starting app
         self.navbar_frame.update_karma(0)
 
@@ -1037,6 +1069,7 @@ class App(customtkinter.CTk):
             self.check_today_karma()
             TaskListFrame.end_of_day = True
         if self.current_date < today:
+            self.day_check = False
             self.reset_tasks(today)
 
     def auto_save(self):
