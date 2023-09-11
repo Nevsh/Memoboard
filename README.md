@@ -82,8 +82,8 @@ Im Folgenden eine Übersicht über aller Funktionalitäten.
   <img src="images/times_up_window.gif" alt="Timer alert" style="width:100%; max-width:1408px">
   <br>
   <br>
-  <img src="images/add_alarm.png" alt="Adding Alarm" style="width:48%; max-width:400px; display:inline-block">
-  <img src="images/activate_alarm.png" alt="Activating Alarm" style="width:48%; max-width:400px; display:inline-block">
+  <img src="images/add_alarm.png" alt="Adding Alarm" style="width:48%; max-width:780px; display:inline-block">
+  <img src="images/activate_alarm.png" alt="Activating Alarm" style="width:48%; max-width:780px; display:inline-block">
 </div>
 <br>
 
