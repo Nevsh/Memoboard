@@ -20,28 +20,28 @@ class NavbarFrame(customtkinter.CTkFrame):
     def __init__(self, master):
         super().__init__(master, fg_color=("gray65", "gray40"), corner_radius=0)
         self.master = master
-        self.icon_path = app_path + "/Icons/neutral_100.png"
+        self.icon_path = app_path + "/icons/neutral_100.png"
         self.karma_message = "Consistency is everything. Keep going."
         self.karma_icon_neutral = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/neutral_100.png"), size=(32, 32)
+            Image.open(app_path + "/icons/neutral_100.png"), size=(32, 32)
         )
         self.karma_icon_bad_3 = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/bad_3_100.png"), size=(32, 32)
+            Image.open(app_path + "/icons/bad_3_100.png"), size=(32, 32)
         )
         self.karma_icon_bad_2 = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/bad_2_100.png"), size=(32, 32)
+            Image.open(app_path + "/icons/bad_2_100.png"), size=(32, 32)
         )
         self.karma_icon_bad_1 = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/bad_1_100.png"), size=(32, 32)
+            Image.open(app_path + "/icons/bad_1_100.png"), size=(32, 32)
         )
         self.karma_icon_good_1 = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/good_1_100.png"), size=(32, 32)
+            Image.open(app_path + "/icons/good_1_100.png"), size=(32, 32)
         )
         self.karma_icon_good_2 = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/good_2_100.png"), size=(32, 32)
+            Image.open(app_path + "/icons/good_2_100.png"), size=(32, 32)
         )
         self.karma_icon_good_3 = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/good_3_100.png"), size=(32, 32)
+            Image.open(app_path + "/icons/good_3_100.png"), size=(32, 32)
         )
         self.karma_counter = 0
         self.karma_label = customtkinter.CTkLabel(
@@ -61,7 +61,7 @@ class NavbarFrame(customtkinter.CTkFrame):
         )
         self.karma_counter_label.grid(row=0, column=4, padx=10, pady=10, sticky="e")
         self.switch_icon_light = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/light_78.png"), size=(32, 32)
+            Image.open(app_path + "/icons/light_78.png"), size=(32, 32)
         )
 
         self.mode_switch_var = customtkinter.StringVar(value="off")
@@ -82,11 +82,11 @@ class NavbarFrame(customtkinter.CTkFrame):
         )
         self.switch_label.grid(row=0, column=0, padx=(10, 0), pady=10, sticky="w")
         self.save_icon = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/save_96.png"), size=(28, 28)
+            Image.open(app_path + "/icons/save_96.png"), size=(28, 28)
         )
 
         self.end_of_day_icon = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/dusk_96.png"), size=(30, 30)
+            Image.open(app_path + "/icons/dusk_96.png"), size=(30, 30)
         )
         self.end_of_day_label = customtkinter.CTkLabel(
             self,
@@ -132,27 +132,27 @@ class NavbarFrame(customtkinter.CTkFrame):
         self.karma_counter_label.configure(text=f"{self.karma_counter} | ")
         if self.karma_counter in range(1, 1500):
             self.karma_counter_label.configure(image=self.karma_icon_good_1)
-            self.icon_path = app_path + "/Icons/good_1_100.png"
+            self.icon_path = app_path + "/icons/good_1_100.png"
             self.karma_message = "Good work! :)"
         elif self.karma_counter in range(1500, 3000):
             self.karma_counter_label.configure(image=self.karma_icon_good_2)
-            self.icon_path = app_path + "/Icons/good_2_100.png"
+            self.icon_path = app_path + "/icons/good_2_100.png"
             self.karma_message = "Great day, keep it that way. ;)"
         elif self.karma_counter >= 3000:
             self.karma_counter_label.configure(image=self.karma_icon_good_3)
-            self.icon_path = app_path + "/Icons/good_3_100.png"
+            self.icon_path = app_path + "/icons/good_3_100.png"
             self.karma_message = "You're awesome :D The world is yours!"
         elif self.karma_counter in range(-499, 0):
             self.karma_counter_label.configure(image=self.karma_icon_bad_1)
-            self.icon_path = app_path + "/Icons/bad_1_100.png"
+            self.icon_path = app_path + "/icons/bad_1_100.png"
             self.karma_message = "Don't worry, tomorrow will be better."
         elif self.karma_counter in range(-999, -499):
             self.karma_counter_label.configure(image=self.karma_icon_bad_2)
-            self.icon_path = app_path + "/Icons/bad_2_100.png"
+            self.icon_path = app_path + "/icons/bad_2_100.png"
             self.karma_message = "Just try to stick to your habits."
         elif self.karma_counter <= -1000:
             self.karma_counter_label.configure(image=self.karma_icon_bad_3)
-            self.icon_path = app_path + "/Icons/bad_3_100.png"
+            self.icon_path = app_path + "/icons/bad_3_100.png"
             self.karma_message = (
                 "Days like this happen. Shake it off and get a good night's sleep."
             )
@@ -269,7 +269,7 @@ class TaskFrame(customtkinter.CTkFrame):
         self.t_state = t_state
 
         self.delete_icon = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/delete_96.png"), size=(25, 25)
+            Image.open(app_path + "/icons/delete_96.png"), size=(25, 25)
         )
         self.checkbox = customtkinter.CTkCheckBox(
             self,
@@ -321,7 +321,7 @@ class TimeFrame(customtkinter.CTkFrame):
         )
         self.countdown.grid(row=0, column=1, sticky="ns", padx=10, pady=10)
         self.countdown_icon = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/hourglass_96.png"), size=(26, 26)
+            Image.open(app_path + "/icons/hourglass_96.png"), size=(26, 26)
         )
         self.countdown_btn = customtkinter.CTkButton(
             self,
@@ -332,7 +332,7 @@ class TimeFrame(customtkinter.CTkFrame):
         )
         self.countdown_btn.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
         self.alarm_icon = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/alarm_90.png"), size=(28, 28)
+            Image.open(app_path + "/icons/alarm_90.png"), size=(28, 28)
         )
         self.alarm_save_btn = customtkinter.CTkButton(
             self, text="", image=self.alarm_icon, width=60, command=self.set_alarm
@@ -350,7 +350,7 @@ class TimeFrame(customtkinter.CTkFrame):
         )
         self.timer.grid(row=1, column=0, columnspan=3, sticky="ew", padx=10, pady=0)
         self.timer_start_icon = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/start_90.png"), size=(26, 26)
+            Image.open(app_path + "/icons/start_90.png"), size=(26, 26)
         )
         self.timer_start_btn = customtkinter.CTkButton(
             self,
@@ -362,7 +362,7 @@ class TimeFrame(customtkinter.CTkFrame):
         )
         self.timer_start_btn.grid(row=2, column=0, sticky="nsew", padx=10, pady=10)
         self.timer_pause_icon = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/pause_90.png"), size=(26, 26)
+            Image.open(app_path + "/icons/pause_90.png"), size=(26, 26)
         )
         self.timer_stop_btn = customtkinter.CTkButton(
             self,
@@ -374,7 +374,7 @@ class TimeFrame(customtkinter.CTkFrame):
         )
         self.timer_stop_btn.grid(row=2, column=1, sticky="nsew", padx=10, pady=10)
         self.timer_reset_icon = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/reset_100.png"), size=(26, 26)
+            Image.open(app_path + "/icons/reset_100.png"), size=(26, 26)
         )
         self.timer_reset_btn = customtkinter.CTkButton(
             self,
@@ -391,7 +391,7 @@ class TimeFrame(customtkinter.CTkFrame):
             title="Alarm",
             msg="Time is up!",
             duration="long",
-            icon=app_path + "/Icons/memory_64.png",
+            icon=app_path + "/icons/memory_64.png",
         )
         self.alert_msg.set_audio(audio.Reminder, loop=False)
 
@@ -548,7 +548,7 @@ class AlarmFrame(customtkinter.CTkFrame):
         )
         self.alarm_time_label.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
         self.delete_icon = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/delete_96.png"), size=(25, 25)
+            Image.open(app_path + "/icons/delete_96.png"), size=(25, 25)
         )
         self.alarm_del_button = customtkinter.CTkButton(
             self,
@@ -566,7 +566,7 @@ class AlarmFrame(customtkinter.CTkFrame):
             title="Alarm",
             msg="Time is up!\nIt's " + self.alarm_time,
             duration="long",
-            icon=app_path + "/Icons/memory_64.png",
+            icon=app_path + "/icons/memory_64.png",
         )
         self.alarm_msg.set_audio(audio.Reminder, loop=False)
         self.reminder_msg = Notification(
@@ -574,7 +574,7 @@ class AlarmFrame(customtkinter.CTkFrame):
             title="Exercise Time!",
             msg=self.rem_msg,
             duration="long",
-            icon=app_path + "/Icons/memory_64.png",
+            icon=app_path + "/icons/memory_64.png",
         )
         self.reminder_msg.set_audio(audio.Reminder, loop=False)
 
@@ -730,7 +730,7 @@ class App(customtkinter.CTk):
         self.window_height = 620
         self.minsize(self.window_width, self.window_height)
         self.maxsize(self.window_width, self.window_height)
-        self.iconbitmap("./Icons/memory_32.ico")
+        self.iconbitmap("./icons/memory_32.ico")
         self.app_font = customtkinter.CTkFont("Century Gothic", 15, "bold")
         self.current_date = date.today()
         self.current_time = datetime.now()
@@ -789,7 +789,7 @@ class App(customtkinter.CTk):
         self.textbox.grid(row=1, column=0, sticky="nsew", columnspan=2)
 
         self.delete_icon = customtkinter.CTkImage(
-            Image.open(app_path + "/Icons/clean_90.png"), size=(25, 25)
+            Image.open(app_path + "/icons/clean_90.png"), size=(25, 25)
         )
         self.clear_button = customtkinter.CTkButton(
             self.tab_view.tab("Ideas"),
@@ -1100,7 +1100,6 @@ class App(customtkinter.CTk):
 
 
 app = App()
-# check if data.json initially exists
 app.load_data()
 app.clock()
 app.auto_save()
