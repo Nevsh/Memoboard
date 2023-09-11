@@ -600,7 +600,6 @@ class AlarmFrame(customtkinter.CTkFrame):
                 self.reminder_msg.show()
                 self.alarm_mode_switch.deselect()
                 self.master.master.master.master.exercise_frame.reminder_switch.toggle()
-                # self.destroy()
             else:
                 self.alarm_msg.show()
                 self.alarm_mode_switch.deselect()
@@ -709,6 +708,7 @@ class ExerciseFrame(customtkinter.CTkFrame):
             )
             self.reminder_alarm.alarm_mode_switch.toggle()
         else:
+            self.reminder = False
             self.reminder_menu.configure(state="normal")
             self.reminder_alarm.destroy()
 
