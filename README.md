@@ -8,7 +8,7 @@
 <h4 align="center">
     Ein minimalistisches Board um tägliche Aufgaben, Ideen und die Zeit im Auge zu behalten.
     <br>
-    Entwickelt unter Verwendung von <a href="https://customtkinter.tomschimansky.com/">CustomTkinter</a>.
+    Entwickelt für Windows unter Verwendung von <a href="https://customtkinter.tomschimansky.com/">CustomTkinter</a>.
 </h4>
 
 <p align="center">
@@ -26,8 +26,8 @@ Im Folgenden eine Übersicht über aller Funktionalitäten.
 
 <br>
 <div align="center">
-  <img src="images/dark_mode.png" alt="Dark-Mode" style="width:48%">
-  <img src="images/light_mode.png" alt="Light-Mode" style="width:48%">
+  <img src="images/dark_mode.png" alt="Dark-Mode" style="width:48%; max-width:780px">
+  <img src="images/light_mode.png" alt="Light-Mode" style="width:48%; max-width:780px">
 </div>
 <br>
 
