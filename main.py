@@ -158,6 +158,8 @@ class NavbarFrame(customtkinter.CTkFrame):
             )
         else:
             self.karma_counter_label.configure(image=self.karma_icon_neutral)
+            self.icon_path = app_path + "/icons/neutral_100.png"
+            self.karma_message = "Consistency is everything. Keep going."
 
 
 # class TaskInputFrame creates a frame for adding a new task
@@ -747,6 +749,7 @@ class App(customtkinter.CTk):
             f"{self.window_width}x{self.window_height}+{self.pos_x}+{self.pos_y}"
         )
 
+        # Main window widgets
         self.navbar_frame = NavbarFrame(self)
         self.navbar_frame.grid(row=0, column=0, sticky="ew", columnspan=2)
 
